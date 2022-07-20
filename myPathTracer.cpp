@@ -95,19 +95,38 @@ int main(int argc, char** argv)
 			vals = read_vals(s, 4);
 			Eigen::Vector3d center;
 			center << vals[0], vals[1], vals[2];
-			scene.primitives.push_back(make_unique<Sphere>(center, vals[3], ambientMem, matMem));
+			if (trans.isApprox(trans.Identity())) {
+				scene.primitives.push_back(make_unique<Sphere>(center, vals[3], ambientMem, matMem, trans, false));
+			}
+			else {
+				scene.primitives.push_back(make_unique<Sphere>(center, vals[3], ambientMem, matMem, trans, true));
+			}
 
 		}
 		else if (cmd == "tri") {
 			vals = read_vals(s, 3);
-			scene.primitives.push_back(make_unique<Triangle>(vertices[(int)vals[0]], vertices[(int)vals[1]], vertices[(int)vals[2]], ambientMem, matMem));
+			Eigen::Vector3d v0, v1, v2;
+			v0 = trans * vertices[(int)vals[0]];
+			v1 = trans * vertices[(int)vals[1]];
+			v2 = trans * vertices[(int)vals[2]];
+			scene.primitives.push_back(make_unique<Triangle>(v0, v1, v2, ambientMem, matMem));
 			//cout << scene.primitives.size() << endl << scene.primitives[0]->normal(vertices[0]) << endl;
 		}
 		else if (cmd == "trinormal") {
 			// TODO: untested
 			vals = read_vals(s, 3);
-			unique_ptr<TriNormal> temp = make_unique<TriNormal>(vertnormal_vertices[(int)vals[0]], vertnormal_vertices[(int)vals[1]], vertnormal_vertices[(int)vals[2]], ambientMem, matMem);
-			temp->setNormal(vertnormal_normal[(int)vals[0]], vertnormal_normal[(int)vals[1]], vertnormal_normal[(int)vals[2]]);
+			Eigen::Vector3d v0, v1, v2, n0, n1, n2;
+			v0 = trans * vertnormal_vertices[(int)vals[0]];
+			v1 = trans * vertnormal_vertices[(int)vals[1]];
+			v2 = trans * vertnormal_vertices[(int)vals[2]];
+			n0 = trans.linear().inverse().transpose() * vertnormal_normal[(int)vals[0]];
+			n1 = trans.linear().inverse().transpose() * vertnormal_normal[(int)vals[1]];
+			n2 = trans.linear().inverse().transpose() * vertnormal_normal[(int)vals[2]];
+			n0.normalize();
+			n1.normalize();
+			n2.normalize();
+			unique_ptr<TriNormal> temp = make_unique<TriNormal>(v0, v1, v2, ambientMem, matMem);
+			temp->setNormal(n0, n1, n2);
 			scene.primitives.push_back(move(temp));
 		}
 		else if (cmd == "directional" || cmd == "point") {
@@ -120,7 +139,7 @@ int main(int argc, char** argv)
 			else {
 				scene.lights.push_back(make_unique<PointLight>(p, c));
 			}
-			cout << scene.lights.size() << endl;
+			//cout << scene.lights.size() << endl;
 		}
 		else if (cmd == "ambient") {
 			vals = read_vals(s, 3);
@@ -165,7 +184,9 @@ int main(int argc, char** argv)
 		}
 		else if (cmd == "rotate") {
 			vals = read_vals(s, 4);
-			trans = Eigen::AngleAxis(vals[3], Eigen::Vector3d(vals[0], vals[1], vals[2])) * trans;
+			Eigen::Vector3d axis(vals[0], vals[1], vals[2]);
+			axis.normalize();
+			trans = Eigen::AngleAxis(vals[3], axis) * trans;
 		}
 		else {
 			cout << "\t" << parseline << endl;

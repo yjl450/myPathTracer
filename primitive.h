@@ -34,8 +34,10 @@ class Sphere: public Primitive {
 public:
 	Eigen::Vector3d o;
 	double r;
+	bool transformed = false;
+	Eigen::Transform<double, 3, Eigen::Affine> trans = Eigen::Affine3d::Identity();
 
-	Sphere(Eigen::Vector3d center, double radius, Eigen::Vector3d amb, Material material);
+	Sphere(Eigen::Vector3d center, double radius, Eigen::Vector3d amb, Material material, Eigen::Transform<double, 3, Eigen::Affine> transfromation, bool trans_flag);
 	virtual double intersect(Ray ray);
 	virtual Eigen::Vector3d normal(Eigen::Vector3d point);
 };

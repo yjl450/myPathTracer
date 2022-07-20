@@ -8,12 +8,16 @@ Ray::Ray(Eigen::Vector3d v0, Eigen::Vector3d vt)
 }
 
 // Sphere methods
-Sphere::Sphere(Eigen::Vector3d center, double radius, Eigen::Vector3d amb, Material material)
+Sphere::Sphere(Eigen::Vector3d center, double radius, Eigen::Vector3d amb, Material material, Eigen::Transform<double, 3, Eigen::Affine> transformation, bool trans_flag)
 {
 	o = center;
 	r = radius;
 	ambient = amb;
 	mat = material;
+	if (trans_flag) {
+		transformed = true;
+		trans = transformation.inverse();
+	}
 }
 
 double Sphere::intersect(Ray ray)
