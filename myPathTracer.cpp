@@ -7,23 +7,24 @@
 #include <vector>
 #include <Eigen/core>
 #include <memory>
-// fpng at https ://github.com/richgel999/fpng
-#include "fpng.h"
+#include <stack>
+// External libraries
+#include "fpng.h" // fpng at https ://github.com/richgel999/fpng
 #include "fpng.cpp"
-#include "primitive.h"
+// Project components
+#include "scene.h"
 
 using namespace std;
 
 vector<double> read_vals(stringstream &s, int num) {
-	string val;
+	double val;
 	vector<double> vals;
 	for (int i = 0; i < num; i++) {
 		s >> val;
-		vals.push_back(stod(val));
+		vals.push_back(val);
 	}
 	return vals;
 }
-
 
 int main(int argc, char** argv)
 {
@@ -40,7 +41,7 @@ int main(int argc, char** argv)
 	}
 
 	// start parsing scene description
-	Scene scene{0};
+	Scene scene;
 	string parseline;
 	string cmd;
 	vector<double> vals;
@@ -48,17 +49,31 @@ int main(int argc, char** argv)
 	vector<Eigen::Vector3d> vertices;
 	vector<Eigen::Vector3d> vertnormal_vertices;
 	vector<Eigen::Vector3d> vertnormal_normal;
+	Eigen::Vector3d ambientMem(0.2, 0.2, 0.2);
+	Material matMem;
+	string outname("output.png");
+	//TODO: add subfolder support
+	//string outprefix("out\\");
+	stack<Eigen::Transform<double, 3, Eigen::Affine>> transStack;
+	Eigen::Transform<double, 3, Eigen::Affine> trans = Eigen::Affine3d::Identity();
 
-	scene.maxdepth = 5; // default maxdepth if not provided
 	while (getline(scenefile, parseline)) {
-		if (parseline[0] == '#' || parseline.length() == 0) continue;
 		s.clear();
 		s.str(parseline);
 		s >> cmd;
-		if (cmd == "size"){
-			s >> scene.width;
-			s >> scene.height;
-		} 
+		if (parseline.length() == 0 || parseline[0] == '#' || cmd == "maxverts" || cmd == "maxvertnorms") {
+			// ignore
+			continue;
+		}
+		else if (cmd == "size"){
+			s >> scene.width >> scene.height;
+		}
+		else if (cmd == "output") {
+			s >> outname;
+		}
+		else if (cmd == "maxdepth") {
+			s >> scene.maxdepth;
+		}
 		else if (cmd == "camera"){
 			vals = read_vals(s, 10);
 			scene.cameraFrom << vals[0], vals[1], vals[2];
@@ -80,20 +95,77 @@ int main(int argc, char** argv)
 			vals = read_vals(s, 4);
 			Eigen::Vector3d center;
 			center << vals[0], vals[1], vals[2];
-			scene.primitives.push_back(make_unique<Sphere>(center, vals[3]));
+			scene.primitives.push_back(make_unique<Sphere>(center, vals[3], ambientMem, matMem));
 
 		}
 		else if (cmd == "tri") {
 			vals = read_vals(s, 3);
-			scene.primitives.push_back(make_unique<Triangle>(vertices[(int)vals[0]], vertices[(int)vals[1]], vertices[(int)vals[2]]));
+			scene.primitives.push_back(make_unique<Triangle>(vertices[(int)vals[0]], vertices[(int)vals[1]], vertices[(int)vals[2]], ambientMem, matMem));
 			//cout << scene.primitives.size() << endl << scene.primitives[0]->normal(vertices[0]) << endl;
 		}
 		else if (cmd == "trinormal") {
 			// TODO: untested
 			vals = read_vals(s, 3);
-			unique_ptr<TriNormal> temp = make_unique<TriNormal>(vertnormal_vertices[(int)vals[0]], vertnormal_vertices[(int)vals[1]], vertnormal_vertices[(int)vals[2]]);
+			unique_ptr<TriNormal> temp = make_unique<TriNormal>(vertnormal_vertices[(int)vals[0]], vertnormal_vertices[(int)vals[1]], vertnormal_vertices[(int)vals[2]], ambientMem, matMem);
 			temp->setNormal(vertnormal_normal[(int)vals[0]], vertnormal_normal[(int)vals[1]], vertnormal_normal[(int)vals[2]]);
 			scene.primitives.push_back(move(temp));
+		}
+		else if (cmd == "directional" || cmd == "point") {
+			vals = read_vals(s, 6);
+			Eigen::Vector3d p(vals[0], vals[1], vals[2]);
+			Eigen::Vector3d c(vals[3], vals[4], vals[5]);
+			if (cmd == "directional") {
+				scene.lights.push_back(make_unique<Directional>(p, c));
+			}
+			else {
+				scene.lights.push_back(make_unique<PointLight>(p, c));
+			}
+			cout << scene.lights.size() << endl;
+		}
+		else if (cmd == "ambient") {
+			vals = read_vals(s, 3);
+			ambientMem << vals[0], vals[1], vals[2];
+		}
+		else if (cmd == "attenuation") {
+			vals = read_vals(s, 3);
+			scene.attenuation[0] = vals[0];
+			scene.attenuation[1] = vals[1];
+			scene.attenuation[2] = vals[2];
+		}
+		else if (cmd == "diffuse") {
+			vals = read_vals(s, 3);
+			matMem.diffuse << vals[0], vals[1], vals[2];
+		}
+		else if (cmd == "specular") {
+			vals = read_vals(s, 3);
+			matMem.specualr << vals[0], vals[1], vals[2];
+		}
+		else if (cmd == "emission") {
+			vals = read_vals(s, 3);
+			matMem.emission << vals[0], vals[1], vals[2];
+		}
+		else if (cmd == "shininess") {
+			vals = read_vals(s, 1);
+			matMem.shininess = vals[0];
+		}
+		else if (cmd == "pushTransform") {
+			transStack.push(trans);
+		}
+		else if (cmd == "popTransform") {
+			trans = transStack.top();
+			transStack.pop();
+		}
+		else if (cmd == "translate") {
+			vals = read_vals(s, 3);
+			trans = Eigen::Translation<double, 3>(Eigen::Vector3d(vals[0], vals[1], vals[2])) * trans;
+		}
+		else if (cmd == "scale") {
+			vals = read_vals(s, 3);
+			trans = Eigen::Scaling(Eigen::Vector3d(vals[0], vals[1], vals[2])) * trans;
+		}
+		else if (cmd == "rotate") {
+			vals = read_vals(s, 4);
+			trans = Eigen::AngleAxis(vals[3], Eigen::Vector3d(vals[0], vals[1], vals[2])) * trans;
 		}
 		else {
 			cout << "\t" << parseline << endl;
@@ -112,7 +184,8 @@ int main(int argc, char** argv)
 		canvas[i+2] = x * 127 / scene.width + y * 127 / scene.height;
 	}
 	fpng::fpng_init();
-	fpng::fpng_encode_image_to_file("output.png", canvas, scene.width, scene.height, 3);
+	fpng::fpng_encode_image_to_file((outname).c_str(), canvas, scene.width, scene.height, 3);
+	cout << "Image generated at " << outname << ", exiting renderer..." << endl;
 	delete[] canvas;
 	return 0;
 }

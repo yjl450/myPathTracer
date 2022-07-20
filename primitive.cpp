@@ -1,12 +1,5 @@
 #include "primitive.h"
 
-// Scene methods
-Scene::~Scene()
-{
-	//TODO:
-}
-
-
 // Ray methods
 Ray::Ray(Eigen::Vector3d v0, Eigen::Vector3d vt)
 {
@@ -15,10 +8,12 @@ Ray::Ray(Eigen::Vector3d v0, Eigen::Vector3d vt)
 }
 
 // Sphere methods
-Sphere::Sphere(Eigen::Vector3d center, double radius)
+Sphere::Sphere(Eigen::Vector3d center, double radius, Eigen::Vector3d amb, Material material)
 {
 	o = center;
 	r = radius;
+	ambient = amb;
+	mat = material;
 }
 
 double Sphere::intersect(Ray ray)
@@ -33,12 +28,14 @@ Eigen::Vector3d Sphere::normal(Eigen::Vector3d point)
 }
 
 // Triangle methods
-Triangle::Triangle(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vector3d vertex2)
+Triangle::Triangle(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vector3d vertex2, Eigen::Vector3d amb, Material material)
 {
 	Eigen::Vector3d edge1, edge2;
 	v0 = vertex0;
 	v1 = vertex1;
 	v2 = vertex2;
+	mat = material;
+	ambient = amb;
 	edge1 = v1 - v0;
 	edge2 = v2 - v0;
 	n = edge1.cross(edge2);

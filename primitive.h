@@ -2,6 +2,17 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <string>
+
+const double e = 1e-10;
+
+class Material{
+public:
+	Eigen::Vector3d diffuse = Eigen::Vector3d(1, 0, 0);
+	Eigen::Vector3d specualr = Eigen::Vector3d(0, 0, 0);
+	double shininess = 0;
+	Eigen::Vector3d emission = Eigen::Vector3d(0, 0, 0);
+};
 
 class Ray {
 public:
@@ -13,6 +24,8 @@ public:
 // abstract class for all primitives
 class Primitive {
 public:
+	Eigen::Vector3d ambient;
+	Material mat;
 	virtual double intersect(Ray ray) = 0;
 	virtual Eigen::Vector3d normal(Eigen::Vector3d point) = 0;
 };
@@ -22,7 +35,7 @@ public:
 	Eigen::Vector3d o;
 	double r;
 
-	Sphere(Eigen::Vector3d center, double radius);
+	Sphere(Eigen::Vector3d center, double radius, Eigen::Vector3d amb, Material material);
 	virtual double intersect(Ray ray);
 	virtual Eigen::Vector3d normal(Eigen::Vector3d point);
 };
@@ -34,7 +47,7 @@ public:
 	Eigen::Vector3d v2;
 	Eigen::Vector3d n;
 
-	Triangle(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vector3d vertex2);
+	Triangle(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vector3d vertex2, Eigen::Vector3d amb, Material material);
 	virtual double intersect(Ray ray);
 	virtual Eigen::Vector3d normal(Eigen::Vector3d point);
 };
@@ -45,28 +58,8 @@ public:
 	Eigen::Vector3d n1;
 	Eigen::Vector3d n2;
 
-	TriNormal(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vector3d vertex2) :Triangle(vertex0, vertex1, vertex2) {
+	TriNormal(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vector3d vertex2, Eigen::Vector3d amb, Material material) :Triangle(vertex0, vertex1, vertex2, amb, material) {
 	};
 	void setNormal(Eigen::Vector3d normal0, Eigen::Vector3d normal1, Eigen::Vector3d normal2);
 	virtual Eigen::Vector3d normal(Eigen::Vector3d point);
-};
-
-class Scene {
-public:
-	// canvas size
-	int width;
-	int height;
-	// max number of ray bounce
-	int maxdepth;
-	// camera setting
-	Eigen::Vector3d cameraFrom;
-	Eigen::Vector3d cameraAt;
-	Eigen::Vector3d cameraUp;
-	double fov;
-	// primitives
-	std::vector<std::unique_ptr<Primitive>> primitives;
-
-
-	~Scene();
-
 };
