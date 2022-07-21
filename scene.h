@@ -1,6 +1,11 @@
 #pragma once
 
 #include "primitive.h"
+#include <fstream>
+#include <cassert>
+#include <sstream>
+#include <vector>
+#include <stack>
 
 class Light {
 public:
@@ -36,6 +41,10 @@ public:
 	// lighting
 	std::vector<double> attenuation{ 1, 0, 0 };
 	std::vector<std::unique_ptr<Light>> lights;
+	//output
+	std::string outname = "output.png";
 
 	~Scene();
 };
+
+void parse_scene(std::ifstream& scenefile, Scene& scene);
