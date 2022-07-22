@@ -6,6 +6,7 @@
 #include <sstream>
 #include <vector>
 #include <stack>
+#include <memory>
 
 class Light {
 public:

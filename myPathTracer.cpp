@@ -1,9 +1,18 @@
 ﻿#include <iostream>
 // External libraries
-#include "fpng.h" // fpng at https ://github.com/richgel999/fpng
-#include "fpng.cpp"
+#include <FreeImage.h>
 // Project components
 #include "scene.h"
+
+#if _WIN32
+#define r 2
+#define g 1
+#define b 0
+#else
+#define r 0
+#define g 1
+#define b 2
+#endif
 
 using namespace std;
 
@@ -34,14 +43,23 @@ int main(int argc, char** argv)
 	// start shading
 	unsigned char* canvas = new unsigned char[scene.height*scene.width*3];
 	int x = 0, y = 0;
+	//TODO: add progress bar
 	for (int i = 0; i < scene.height * scene.width * 3; i+=3) {
 		y = i / 3 / scene.width;
 		x = (i / 3) - (i / 3 / scene.width) * scene.width;
-		//TODO: ray tracing
+		// TODO: ray tracing
+		canvas[i + r] = 0;
+		canvas[i + g] = 0;//x * 127 / scene.width + y * 127 / scene.height;
+		canvas[i + +b] = x * 127 / scene.width + y * 127 / scene.height;
 	}
-	fpng::fpng_init();
-	fpng::fpng_encode_image_to_file((scene.outname).c_str(), canvas, scene.width, scene.height, 3);
-	cout << "\nImage generated at " << scene.outname << ", exiting renderer..." << endl;
+
+	// save image and cleanup memory
+	FIBITMAP* img = FreeImage_ConvertFromRawBits(canvas, scene.width, scene.height, scene.width * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, true);
+	FreeImage_Initialise();
+	FreeImage_Save(FIF_PNG, img, scene.outname.c_str(), 0);
+	FreeImage_Unload(img);
+	FreeImage_DeInitialise();
 	delete[] canvas;
+	cout << "\nImage generated at " << scene.outname << ", exiting renderer..." << endl;
 	return 0;
 }
