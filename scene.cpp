@@ -33,6 +33,15 @@ vector<double> read_vals(stringstream& s, int num) {
 	return vals;
 }
 
+// only works on windows
+void reorder_color(Eigen::Vector3d& rgb) {
+#if _WIN32
+	double tmp = rgb[0];
+	rgb[0] = rgb[2];
+	rgb[2] = tmp;
+#endif
+}
+
 void parse_scene(std::ifstream& scenefile, Scene& scene) {
 	string parseline;
 	string cmd;
@@ -68,6 +77,7 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			scene.cameraFrom << vals[0], vals[1], vals[2];
 			scene.cameraAt << vals[3], vals[4], vals[5];
 			scene.cameraUp << vals[6], vals[7], vals[8];
+			scene.cameraUp.normalize();
 			scene.fov = vals[9];
 		}
 		else if (cmd == "vertex") {
@@ -121,7 +131,9 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			vals = read_vals(s, 6);
 			Eigen::Vector3d p(vals[0], vals[1], vals[2]);
 			Eigen::Vector3d c(vals[3], vals[4], vals[5]);
+			reorder_color(c);
 			if (cmd == "directional") {
+				p.normalize();
 				scene.lights.push_back(make_unique<Directional>(p, c));
 			}
 			else {
@@ -132,6 +144,7 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 		else if (cmd == "ambient") {
 			vals = read_vals(s, 3);
 			ambientMem << vals[0], vals[1], vals[2];
+			reorder_color(ambientMem);
 		}
 		else if (cmd == "attenuation") {
 			vals = read_vals(s, 3);
@@ -142,14 +155,17 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 		else if (cmd == "diffuse") {
 			vals = read_vals(s, 3);
 			matMem.diffuse << vals[0], vals[1], vals[2];
+			reorder_color(matMem.diffuse);
 		}
 		else if (cmd == "specular") {
 			vals = read_vals(s, 3);
 			matMem.specualr << vals[0], vals[1], vals[2];
+			reorder_color(matMem.specualr);
 		}
 		else if (cmd == "emission") {
 			vals = read_vals(s, 3);
 			matMem.emission << vals[0], vals[1], vals[2];
+			reorder_color(matMem.emission);
 		}
 		else if (cmd == "shininess") {
 			vals = read_vals(s, 1);

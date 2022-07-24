@@ -1,10 +1,10 @@
 #pragma once
-
+#include <iostream>
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <string>
 
-const double e = 1e-10;
+#define eps 1e-10
 
 class Material{
 public:
