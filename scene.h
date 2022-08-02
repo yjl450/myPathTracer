@@ -30,6 +30,7 @@ public:
 	// canvas size
 	int width = 0;
 	int height = 0;
+	double aspect = 0;
 	// max number of ray bounce
 	int maxdepth = 5;
 	// camera setting

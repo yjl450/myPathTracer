@@ -65,6 +65,7 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 		}
 		else if (cmd == "size") {
 			s >> scene.width >> scene.height;
+			scene.aspect = (double)scene.width / scene.height;
 		}
 		else if (cmd == "output") {
 			s >> scene.outname;
