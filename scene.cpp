@@ -52,7 +52,6 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 	vector<Eigen::Vector3d> vertices;
 	vector<Eigen::Vector3d> vertnormal_vertices;
 	vector<Eigen::Vector3d> vertnormal_normal;
-	Eigen::Vector3d ambientMem(0.2, 0.2, 0.2);
 	Material matMem;
 	stack<Eigen::Transform<double, 3, Eigen::Affine>> transStack;
 	Eigen::Transform<double, 3, Eigen::Affine> trans = Eigen::Affine3d::Identity();
@@ -97,10 +96,10 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			Eigen::Vector3d center;
 			center << vals[0], vals[1], vals[2];
 			if (trans.isApprox(trans.Identity())) {
-				scene.primitives.push_back(make_unique<Sphere>(center, vals[3], ambientMem, matMem, trans, false));
+				scene.primitives.push_back(make_unique<Sphere>(center, vals[3], matMem, trans, false));
 			}
 			else {
-				scene.primitives.push_back(make_unique<Sphere>(center, vals[3], ambientMem, matMem, trans, true));
+				scene.primitives.push_back(make_unique<Sphere>(center, vals[3], matMem, trans, true));
 			}
 		}
 		else if (cmd == "tri") {
@@ -109,7 +108,7 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			v0 = vertices[(int)vals[0]];
 			v1 = vertices[(int)vals[1]];
 			v2 = vertices[(int)vals[2]];
-			scene.primitives.push_back(make_unique<Triangle>(v0, v1, v2, trans, ambientMem, matMem));
+			scene.primitives.push_back(make_unique<Triangle>(v0, v1, v2, trans, matMem));
 		}
 		else if (cmd == "trinormal") {
 			// TODO: untested
@@ -124,7 +123,7 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			n0.normalize();
 			n1.normalize();
 			n2.normalize();
-			unique_ptr<TriNormal> temp = make_unique<TriNormal>(v0, v1, v2, trans, ambientMem, matMem);
+			unique_ptr<TriNormal> temp = make_unique<TriNormal>(v0, v1, v2, trans, matMem);
 			temp->setNormal(n0, n1, n2);
 			scene.primitives.push_back(move(temp));
 		}
@@ -143,8 +142,8 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 		}
 		else if (cmd == "ambient") {
 			vals = read_vals(s, 3);
-			ambientMem << vals[0], vals[1], vals[2];
-			reorder_color(ambientMem);
+			matMem.ambient << vals[0], vals[1], vals[2];
+			reorder_color(matMem.ambient);
 		}
 		else if (cmd == "attenuation") {
 			vals = read_vals(s, 3);

@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 		}
 		Eigen::Vector3d shade(0, 0, 0);
 		if (ind != -1) {
-			shade = scene.primitives[ind]->ambient;
+			shade = scene.primitives[ind]->mat.ambient + scene.primitives[ind]->mat.emission;
 			shade = shade * 255;
 		}
 		copy_n(shade.data(), 3, canvas + i);

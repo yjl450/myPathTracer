@@ -9,11 +9,10 @@ Ray::Ray(Eigen::Vector3d v0, Eigen::Vector3d vt)
 }
 
 // Sphere methods
-Sphere::Sphere(Eigen::Vector3d center, double radius, Eigen::Vector3d amb, Material material, Eigen::Transform<double, 3, Eigen::Affine> transformation, bool trans_flag)
+Sphere::Sphere(Eigen::Vector3d center, double radius, Material material, Eigen::Transform<double, 3, Eigen::Affine> transformation, bool trans_flag)
 {
 	o = center;
 	r = radius;
-	ambient = amb;
 	mat = material;
 	if (trans_flag) {
 		transformed = true;
@@ -33,7 +32,7 @@ double Sphere::intersect(Ray ray)
 	b = newRay.pt.dot(newRay.p0 - o) * 2;
 	d = b * b - 4 * a * ((newRay.p0 - o).dot(newRay.p0 - o) - r * r);
 	if (d < 0) return -1;
-	double t1, t2, t;
+	double t1, t2;
 	d = sqrt(d);
 	t1 = (-b - d) / (2 * a);
 	t2 = (-b + d) / (2 * a);
@@ -49,14 +48,13 @@ Eigen::Vector3d Sphere::normal(Eigen::Vector3d point)
 }
 
 // Triangle methods
-Triangle::Triangle(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vector3d vertex2, Eigen::Transform<double, 3, Eigen::Affine > transformation, Eigen::Vector3d amb, Material material)
+Triangle::Triangle(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vector3d vertex2, Eigen::Transform<double, 3, Eigen::Affine > transformation, Material material)
 {
 	Eigen::Vector3d edge1, edge2;
 	v0 = transformation * vertex0;
 	v1 = transformation * vertex1;
 	v2 = transformation * vertex2;
 	mat = material;
-	ambient = amb;
 	edge1 = v1 - v0;
 	edge2 = v2 - v0;
 	n = edge1.cross(edge2);
