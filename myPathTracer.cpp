@@ -1,18 +1,10 @@
-﻿#include <iostream>
+﻿#include <limits>
 // External libraries
 #include <FreeImage.h>
 // Project components
 #include "scene.h"
-
-#if _WIN32
-#define r 2
-#define g 1
-#define b 0
-#else
-#define r 0
-#define g 1
-#define b 2
-#endif
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 using namespace std;
 
@@ -30,7 +22,7 @@ int main(int argc, char** argv)
 		cout << "\nParsing " << argv[1] << endl; 
 	}
 	//TODO: add subfolder support
-	//string outprefix("out\\");
+	string outprefix("out\\");
 
 	// start parsing scene description
 	Scene scene;
@@ -41,25 +33,58 @@ int main(int argc, char** argv)
 	cout << "\tMax recursion depth: " << scene.maxdepth << endl;
 
 	// start shading
-	unsigned char* canvas = new unsigned char[scene.height*scene.width*3];
+	auto canvas = new unsigned char[scene.height*scene.width*3];
 	int x = 0, y = 0;
 	//TODO: add progress bar
 	for (int i = 0; i < scene.height * scene.width * 3; i+=3) {
 		y = i / 3 / scene.width;
 		x = (i / 3) - (i / 3 / scene.width) * scene.width;
-		// TODO: ray tracing
-		canvas[i + r] = 0;
-		canvas[i + g] = 0;//x * 127 / scene.width + y * 127 / scene.height;
-		canvas[i + +b] = x * 127 / scene.width + y * 127 / scene.height;
+
+		// camera (primary) ray generation
+		Eigen::Vector3d w, u, v;
+		w = (scene.cameraFrom - scene.cameraAt).normalized();
+		u = (scene.cameraUp.cross(w)).normalized();
+		v = w.cross(u);
+		double hfov, alpha, beta;
+		hfov = tan(scene.fov * M_PI / 180 / 2);
+		alpha = hfov * scene.aspect * (2.0f * x / scene.width - 1);
+		beta = hfov * (1 - 2.0f * y / scene.height);
+		Ray cameraRay(scene.cameraFrom, alpha * u + beta * v - w);
+		// intersection test
+		// TODO: use BVH
+		double dist = std::numeric_limits<double>::infinity();
+		double t = -1;
+		int ind = -1;
+
+		for (int p = 0; p < scene.primitives.size(); p++)
+		{
+			t = scene.primitives[p]->intersect(cameraRay);
+			if (t > 0 && t < dist) {
+				dist = t;
+				ind = p;
+			}
+		}
+		Eigen::Vector3d shade(0, 0, 0);
+		if (ind != -1) {
+			shade = scene.primitives[ind]->ambient;
+			shade = shade * 255;
+		}
+		copy_n(shade.data(), 3, canvas + i);
 	}
 
 	// save image and cleanup memory
 	FIBITMAP* img = FreeImage_ConvertFromRawBits(canvas, scene.width, scene.height, scene.width * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, true);
 	FreeImage_Initialise();
-	FreeImage_Save(FIF_PNG, img, scene.outname.c_str(), 0);
+	bool success = FreeImage_Save(FIF_PNG, img, scene.outname.c_str(), 0);
+	if (success) {
+		cout << "\nImage generated at " << scene.outname;
+	}
+	else {
+		cout << "\nImage generation failed";
+	}
 	FreeImage_Unload(img);
 	FreeImage_DeInitialise();
 	delete[] canvas;
-	cout << "\nImage generated at " << scene.outname << ", exiting renderer..." << endl;
+	 cout<< ", exiting renderer..." << endl;
 	return 0;
 }

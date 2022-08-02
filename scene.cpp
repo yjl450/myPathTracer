@@ -1,4 +1,6 @@
 #include "scene.h"
+#define _USE_MATH_DEFINES
+#include <math.h>
 
 using namespace std;
 
@@ -104,25 +106,25 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 		else if (cmd == "tri") {
 			vals = read_vals(s, 3);
 			Eigen::Vector3d v0, v1, v2;
-			v0 = trans * vertices[(int)vals[0]];
-			v1 = trans * vertices[(int)vals[1]];
-			v2 = trans * vertices[(int)vals[2]];
-			scene.primitives.push_back(make_unique<Triangle>(v0, v1, v2, ambientMem, matMem));
+			v0 = vertices[(int)vals[0]];
+			v1 = vertices[(int)vals[1]];
+			v2 = vertices[(int)vals[2]];
+			scene.primitives.push_back(make_unique<Triangle>(v0, v1, v2, trans, ambientMem, matMem));
 		}
 		else if (cmd == "trinormal") {
 			// TODO: untested
 			vals = read_vals(s, 3);
 			Eigen::Vector3d v0, v1, v2, n0, n1, n2;
-			v0 = trans * vertnormal_vertices[(int)vals[0]];
-			v1 = trans * vertnormal_vertices[(int)vals[1]];
-			v2 = trans * vertnormal_vertices[(int)vals[2]];
+			v0 = vertnormal_vertices[(int)vals[0]];
+			v1 = vertnormal_vertices[(int)vals[1]];
+			v2 = vertnormal_vertices[(int)vals[2]];
 			n0 = trans.linear().inverse().transpose() * vertnormal_normal[(int)vals[0]];
 			n1 = trans.linear().inverse().transpose() * vertnormal_normal[(int)vals[1]];
 			n2 = trans.linear().inverse().transpose() * vertnormal_normal[(int)vals[2]];
 			n0.normalize();
 			n1.normalize();
 			n2.normalize();
-			unique_ptr<TriNormal> temp = make_unique<TriNormal>(v0, v1, v2, ambientMem, matMem);
+			unique_ptr<TriNormal> temp = make_unique<TriNormal>(v0, v1, v2, trans, ambientMem, matMem);
 			temp->setNormal(n0, n1, n2);
 			scene.primitives.push_back(move(temp));
 		}
@@ -178,17 +180,17 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 		}
 		else if (cmd == "translate") {
 			vals = read_vals(s, 3);
-			trans = Eigen::Translation<double, 3>(Eigen::Vector3d(vals[0], vals[1], vals[2])) * trans;
+			trans = trans * Eigen::Translation<double, 3>(Eigen::Vector3d(vals[0], vals[1], vals[2]));
 		}
 		else if (cmd == "scale") {
 			vals = read_vals(s, 3);
-			trans = Eigen::Scaling(Eigen::Vector3d(vals[0], vals[1], vals[2])) * trans;
+			trans = trans * Eigen::Scaling(Eigen::Vector3d(vals[0], vals[1], vals[2]));
 		}
 		else if (cmd == "rotate") {
 			vals = read_vals(s, 4);
 			Eigen::Vector3d axis(vals[0], vals[1], vals[2]);
 			axis.normalize();
-			trans = Eigen::AngleAxis(vals[3], axis) * trans;
+			trans = trans * Eigen::AngleAxis(vals[3] * M_PI / 180, axis);
 		}
 	}
 }
