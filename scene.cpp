@@ -84,7 +84,6 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 		else if (cmd == "vertex") {
 			vals = read_vals(s, 3);
 			vertices.push_back(Eigen::Vector3d(vals[0], vals[1], vals[2]));
-			//cout << vertices.size() << endl;
 		}
 		else if (cmd == "vertexnormal") {
 			vals = read_vals(s, 6);
@@ -109,7 +108,6 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			v1 = trans * vertices[(int)vals[1]];
 			v2 = trans * vertices[(int)vals[2]];
 			scene.primitives.push_back(make_unique<Triangle>(v0, v1, v2, ambientMem, matMem));
-			//cout << scene.primitives.size() << endl << scene.primitives[0]->normal(vertices[0]) << endl;
 		}
 		else if (cmd == "trinormal") {
 			// TODO: untested
@@ -140,7 +138,6 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			else {
 				scene.lights.push_back(make_unique<PointLight>(p, c));
 			}
-			//cout << scene.lights.size() << endl;
 		}
 		else if (cmd == "ambient") {
 			vals = read_vals(s, 3);
@@ -193,8 +190,5 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			axis.normalize();
 			trans = Eigen::AngleAxis(vals[3], axis) * trans;
 		}
-		//else {
-		//	cout << "\t" << parseline << endl;
-		//}
 	}
 }
