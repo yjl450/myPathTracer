@@ -48,5 +48,3 @@ public:
 
 	Scene(std::ifstream& scenefile);
 };
-
-void parse_scene(std::ifstream& scenefile, Scene& scene);
