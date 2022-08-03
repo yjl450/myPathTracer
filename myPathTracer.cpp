@@ -3,6 +3,7 @@
 #include <FreeImage.h>
 // Project components
 #include "scene.h"
+#include "raytrace.h"
 
 using namespace std;
 
@@ -28,53 +29,19 @@ int main(int argc, char** argv)
 	cout << "\t" << scene.primitives.size() << " Primitives" << endl;
 	cout << "\t" << scene.lights.size() << " Lights" << endl;
 	cout << "\tMax recursion depth: " << scene.maxdepth << endl;
+	int width = scene.width;
+	int height = scene.height;
+	string outname = scene.outname;
 
 	// start shading
-	auto canvas = new unsigned char[scene.height*scene.width*3];
-	int x = 0, y = 0;
-	//TODO: add progress bar
-	for (int i = 0; i < scene.height * scene.width * 3; i+=3) {
-		y = i / 3 / scene.width;
-		x = (i / 3) - (i / 3 / scene.width) * scene.width;
+	RayTracer raytracer(move(scene));
+	auto canvas = raytracer.rayTraceInit();
 
-		// camera (primary) ray generation
-		Eigen::Vector3d w, u, v;
-		w = (scene.cameraFrom - scene.cameraAt).normalized();
-		u = (scene.cameraUp.cross(w)).normalized();
-		v = w.cross(u);
-		double hfov, alpha, beta;
-		hfov = tan(scene.fov * PI / 180 / 2);
-		alpha = hfov * scene.aspect * (2.0f * x / scene.width - 1);
-		beta = hfov * (1 - 2.0f * y / scene.height);
-		Ray cameraRay(scene.cameraFrom, alpha * u + beta * v - w);
-		// intersection test
-		// TODO: use BVH
-		double dist = std::numeric_limits<double>::infinity();
-		double t = -1;
-		int ind = -1;
-
-		for (int p = 0; p < scene.primitives.size(); p++)
-		{
-			t = scene.primitives[p]->intersect(cameraRay);
-			if (t > 0 && t < dist) {
-				dist = t;
-				ind = p;
-			}
-		}
-		Eigen::Vector3d shade(0, 0, 0);
-		if (ind != -1) {
-			shade = scene.primitives[ind]->mat.ambient + scene.primitives[ind]->mat.emission;
-			shade = shade * 255;
-		}
-		copy_n(shade.data(), 3, canvas + i);
-	}
-
-	// save image and cleanup memory
-	FIBITMAP* img = FreeImage_ConvertFromRawBits(canvas, scene.width, scene.height, scene.width * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, true);
+	//save image and cleanup memory
+	FIBITMAP* img = FreeImage_ConvertFromRawBits(canvas, width, height, width * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, true);
 	FreeImage_Initialise();
-	bool success = FreeImage_Save(FIF_PNG, img, scene.outname.c_str(), 0);
-	if (success) {
-		cout << "\nImage generated at " << scene.outname;
+	if (FreeImage_Save(FIF_PNG, img, outname.c_str(), 0)) {
+		cout << "\nImage generated at " << outname;
 	}
 	else {
 		cout << "\nImage generation failed";

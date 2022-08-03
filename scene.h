@@ -46,5 +46,6 @@ public:
 	//output
 	std::string outname = "output.png";
 
+	Scene() = default;
 	Scene(std::ifstream& scenefile);
 };
