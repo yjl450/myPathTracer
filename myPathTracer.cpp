@@ -3,8 +3,6 @@
 #include <FreeImage.h>
 // Project components
 #include "scene.h"
-#define _USE_MATH_DEFINES
-#include <math.h>
 
 using namespace std;
 
@@ -24,9 +22,8 @@ int main(int argc, char** argv)
 	//TODO: add subfolder support
 	string outprefix("out\\");
 
-	// start parsing scene description
-	Scene scene;
-	parse_scene(scenefile, scene);
+	// parsing scene description
+	Scene scene(scenefile);
 	cout << "\tOutput: " << scene.outname << " (" << scene.width << "x" << scene.height << ")" << endl;
 	cout << "\t" << scene.primitives.size() << " Primitives" << endl;
 	cout << "\t" << scene.lights.size() << " Lights" << endl;
@@ -46,7 +43,7 @@ int main(int argc, char** argv)
 		u = (scene.cameraUp.cross(w)).normalized();
 		v = w.cross(u);
 		double hfov, alpha, beta;
-		hfov = tan(scene.fov * M_PI / 180 / 2);
+		hfov = tan(scene.fov * PI / 180 / 2);
 		alpha = hfov * scene.aspect * (2.0f * x / scene.width - 1);
 		beta = hfov * (1 - 2.0f * y / scene.height);
 		Ray cameraRay(scene.cameraFrom, alpha * u + beta * v - w);

@@ -1,30 +1,8 @@
 #include "scene.h"
-#define _USE_MATH_DEFINES
-#include <math.h>
 
 using namespace std;
 
-// Scene methods
-Scene::~Scene()
-{
-	//TODO:
-}
-
-// Light methods
-Directional::Directional(Eigen::Vector3d direction, Eigen::Vector3d color)
-{
-	kind = "directional";
-	v0 = direction;
-	c = color;
-}
-
-PointLight::PointLight(Eigen::Vector3d origin, Eigen::Vector3d color)
-{
-	kind = "point";
-	v0 = origin;
-	c - color;
-}
-
+// Utils
 vector<double> read_vals(stringstream& s, int num) {
 	double val;
 	vector<double> vals;
@@ -44,7 +22,8 @@ void reorder_color(Eigen::Vector3d& rgb) {
 #endif
 }
 
-void parse_scene(std::ifstream& scenefile, Scene& scene) {
+// Scene methods
+Scene::Scene(std::ifstream& scenefile) {
 	string parseline;
 	string cmd;
 	vector<double> vals;
@@ -65,22 +44,22 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			continue;
 		}
 		else if (cmd == "size") {
-			s >> scene.width >> scene.height;
-			scene.aspect = (double)scene.width / scene.height;
+			s >> width >> height;
+			aspect = (double)width / height;
 		}
 		else if (cmd == "output") {
-			s >> scene.outname;
+			s >> outname;
 		}
 		else if (cmd == "maxdepth") {
-			s >> scene.maxdepth;
+			s >> maxdepth;
 		}
 		else if (cmd == "camera") {
 			vals = read_vals(s, 10);
-			scene.cameraFrom << vals[0], vals[1], vals[2];
-			scene.cameraAt << vals[3], vals[4], vals[5];
-			scene.cameraUp << vals[6], vals[7], vals[8];
-			scene.cameraUp.normalize();
-			scene.fov = vals[9];
+			cameraFrom << vals[0], vals[1], vals[2];
+			cameraAt << vals[3], vals[4], vals[5];
+			cameraUp << vals[6], vals[7], vals[8];
+			cameraUp.normalize();
+			fov = vals[9];
 		}
 		else if (cmd == "vertex") {
 			vals = read_vals(s, 3);
@@ -96,10 +75,10 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			Eigen::Vector3d center;
 			center << vals[0], vals[1], vals[2];
 			if (trans.isApprox(trans.Identity())) {
-				scene.primitives.push_back(make_unique<Sphere>(center, vals[3], matMem, trans, false));
+				primitives.push_back(make_unique<Sphere>(center, vals[3], matMem, trans, false));
 			}
 			else {
-				scene.primitives.push_back(make_unique<Sphere>(center, vals[3], matMem, trans, true));
+				primitives.push_back(make_unique<Sphere>(center, vals[3], matMem, trans, true));
 			}
 		}
 		else if (cmd == "tri") {
@@ -108,7 +87,7 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			v0 = vertices[(int)vals[0]];
 			v1 = vertices[(int)vals[1]];
 			v2 = vertices[(int)vals[2]];
-			scene.primitives.push_back(make_unique<Triangle>(v0, v1, v2, trans, matMem));
+			primitives.push_back(make_unique<Triangle>(v0, v1, v2, trans, matMem));
 		}
 		else if (cmd == "trinormal") {
 			// TODO: untested
@@ -125,7 +104,7 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			n2.normalize();
 			unique_ptr<TriNormal> temp = make_unique<TriNormal>(v0, v1, v2, trans, matMem);
 			temp->setNormal(n0, n1, n2);
-			scene.primitives.push_back(move(temp));
+			primitives.push_back(move(temp));
 		}
 		else if (cmd == "directional" || cmd == "point") {
 			vals = read_vals(s, 6);
@@ -134,10 +113,10 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			reorder_color(c);
 			if (cmd == "directional") {
 				p.normalize();
-				scene.lights.push_back(make_unique<Directional>(p, c));
+				lights.push_back(make_unique<Directional>(p, c));
 			}
 			else {
-				scene.lights.push_back(make_unique<PointLight>(p, c));
+				lights.push_back(make_unique<PointLight>(p, c));
 			}
 		}
 		else if (cmd == "ambient") {
@@ -147,9 +126,9 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 		}
 		else if (cmd == "attenuation") {
 			vals = read_vals(s, 3);
-			scene.attenuation[0] = vals[0];
-			scene.attenuation[1] = vals[1];
-			scene.attenuation[2] = vals[2];
+			attenuation[0] = vals[0];
+			attenuation[1] = vals[1];
+			attenuation[2] = vals[2];
 		}
 		else if (cmd == "diffuse") {
 			vals = read_vals(s, 3);
@@ -189,7 +168,22 @@ void parse_scene(std::ifstream& scenefile, Scene& scene) {
 			vals = read_vals(s, 4);
 			Eigen::Vector3d axis(vals[0], vals[1], vals[2]);
 			axis.normalize();
-			trans = trans * Eigen::AngleAxis(vals[3] * M_PI / 180, axis);
+			trans = trans * Eigen::AngleAxis(vals[3] * PI / 180, axis);
 		}
 	}
+}
+
+// Light methods
+Directional::Directional(Eigen::Vector3d direction, Eigen::Vector3d color)
+{
+	kind = "directional";
+	v0 = direction;
+	c = color;
+}
+
+PointLight::PointLight(Eigen::Vector3d origin, Eigen::Vector3d color)
+{
+	kind = "point";
+	v0 = origin;
+	c - color;
 }

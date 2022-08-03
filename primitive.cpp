@@ -1,4 +1,3 @@
-#include <math.h>
 #include "primitive.h"
 
 // Ray methods

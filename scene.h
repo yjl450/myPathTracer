@@ -46,7 +46,7 @@ public:
 	//output
 	std::string outname = "output.png";
 
-	~Scene();
+	Scene(std::ifstream& scenefile);
 };
 
 void parse_scene(std::ifstream& scenefile, Scene& scene);

@@ -3,6 +3,9 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <string>
+#define _USE_MATH_DEFINES
+#include <math.h>
+#define PI M_PI
 
 #define eps 1e-10
 
