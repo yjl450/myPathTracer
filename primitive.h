@@ -6,6 +6,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #define PI M_PI
+#include <algorithm>
 
 #define eps 1e-10
 

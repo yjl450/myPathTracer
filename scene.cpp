@@ -2,6 +2,21 @@
 
 using namespace std;
 
+// Light methods
+Directional::Directional(Eigen::Vector3d direction, Eigen::Vector3d color)
+{
+	kind = "directional";
+	v0 = direction;
+	c = color;
+}
+
+PointLight::PointLight(Eigen::Vector3d origin, Eigen::Vector3d color)
+{
+	kind = "point";
+	v0 = origin;
+	c = color;
+}
+
 // Utils
 vector<double> read_vals(stringstream& s, int num) {
 	double val;
@@ -14,8 +29,8 @@ vector<double> read_vals(stringstream& s, int num) {
 }
 
 // only works on windows
-void reorder_color(Eigen::Vector3d& rgb) {
-#if _WIN32
+inline void reorder_color(Eigen::Vector3d& rgb) {
+#if _WIN32 || __linux__
 	double tmp = rgb[0];
 	rgb[0] = rgb[2];
 	rgb[2] = tmp;
@@ -59,6 +74,10 @@ Scene::Scene(std::ifstream& scenefile) {
 			cameraAt << vals[3], vals[4], vals[5];
 			cameraUp << vals[6], vals[7], vals[8];
 			cameraUp.normalize();
+			//Eigen::Vector3d camDir = cameraAt - cameraFrom;
+			//cameraUp = cameraUp.cross(camDir);
+			//cameraUp = camDir.cross(cameraUp);
+			//cameraUp.normalize();
 			fov = vals[9];
 		}
 		else if (cmd == "vertex") {
@@ -171,19 +190,4 @@ Scene::Scene(std::ifstream& scenefile) {
 			trans = trans * Eigen::AngleAxis(vals[3] * PI / 180, axis);
 		}
 	}
-}
-
-// Light methods
-Directional::Directional(Eigen::Vector3d direction, Eigen::Vector3d color)
-{
-	kind = "directional";
-	v0 = direction;
-	c = color;
-}
-
-PointLight::PointLight(Eigen::Vector3d origin, Eigen::Vector3d color)
-{
-	kind = "point";
-	v0 = origin;
-	c - color;
 }

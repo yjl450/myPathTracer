@@ -43,7 +43,15 @@ double Sphere::intersect(Ray ray)
 
 Eigen::Vector3d Sphere::normal(Eigen::Vector3d point)
 {
-	return (point - o).normalized();
+	
+	if (!transformed) {
+		Eigen::Vector3d normal = (point - o).normalized();
+		return normal;
+	}
+	Eigen::Vector3d normal = (trans.inverse() * point - o).normalized();
+	normal = trans.linear().inverse().transpose() * normal;
+	normal.normalize();
+	return normal;
 }
 
 // Triangle methods
