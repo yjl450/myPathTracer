@@ -53,9 +53,9 @@ bool RayTracer::visible(Eigen::Vector3d point, int lightInd)
 
 Eigen::Vector3d RayTracer::diffuse(Eigen::Vector3d point, int primInd, int lightInd)
 {
-	Eigen::Vector3d direction = -1 * scene.lights[lightInd]->v0;
+	Eigen::Vector3d direction = scene.lights[lightInd]->v0;
 	if (scene.lights[lightInd]->kind == "point") {
-		direction = -1 * direction - point;
+		direction = direction - point;
 	}
 	direction.normalize();
 	Eigen::Vector3d normal = scene.primitives[primInd]->normal(point);
@@ -66,9 +66,9 @@ Eigen::Vector3d RayTracer::diffuse(Eigen::Vector3d point, int primInd, int light
 
 Eigen::Vector3d RayTracer::specular(Eigen::Vector3d point, int primInd, int lightInd, Eigen::Vector3d eye, int bounce)
 {
-	Eigen::Vector3d LiDir = -1 * scene.lights[lightInd]->v0;
+	Eigen::Vector3d LiDir = scene.lights[lightInd]->v0;
 	if (scene.lights[lightInd]->kind == "point") {
-		LiDir = -1 * LiDir - point;
+		LiDir = LiDir - point;
 	}
 	LiDir.normalize();
 	Eigen::Vector3d viewDir = (eye - point).normalized();
