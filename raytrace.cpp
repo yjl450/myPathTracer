@@ -80,6 +80,14 @@ Eigen::Array3d RayTracer::specular(Eigen::Vector3d point, int primInd, int light
 	return color;
 }
 
+Ray RayTracer::reflRay(Eigen::Vector3d point, int primInd, Eigen::Vector3d eye) {
+	Eigen::Vector3d normal = scene.primitives[primInd]->normal(point);
+	Eigen::Vector3d viewDir = (eye - point).normalized();
+	Eigen::Vector3d refDir = 2 * normal * viewDir.dot(normal) - viewDir;
+	refDir.normalize();
+	return Ray(point + eps * refDir, refDir);
+}
+
 Eigen::Array3d RayTracer::findColor(Eigen::Vector3d point, int primInd, int bounce, Eigen::Vector3d eye) {
 	Eigen::Array3d shade = scene.primitives[primInd]->mat.ambient + scene.primitives[primInd]->mat.emission;
 	for (int i = 0; i < scene.lights.size(); i++) {
@@ -90,20 +98,14 @@ Eigen::Array3d RayTracer::findColor(Eigen::Vector3d point, int primInd, int boun
 				attenuation = scene.attenuation[0] + r * scene.attenuation[1] + r * r * scene.attenuation[2];
 			}
 			shade += (diffuse(point, primInd, i) + specular(point, primInd, i, eye)) / attenuation;
-
-			if (bounce > 0) {
-				Eigen::Vector3d normal = scene.primitives[primInd]->normal(point);
-				Eigen::Vector3d viewDir = (eye - point).normalized();
-				Eigen::Vector3d refDir = 2 * normal * viewDir.dot(normal) - viewDir;
-				refDir.normalize();
-				Ray reflection(point + eps * refDir, refDir);
-				Intersection hit = intersect(reflection);
-				if (hit.ind != -1) {
-					Eigen::Vector3d newpoint = point + hit.t * reflection.pt;
-					shade += scene.primitives[primInd]->mat.specualr * findColor(newpoint, hit.ind, bounce - 1, point);
-				}
-			}
-
+		}
+	}
+	if (bounce > 1 && scene.primitives[primInd]->mat.specualr.sum() > eps) {
+		Ray reflection = reflRay(point, primInd, eye);
+		Intersection hit = intersect(reflection);
+		if (hit.ind != -1) {
+			Eigen::Vector3d newpoint = point + hit.t * reflection.pt;
+			shade += scene.primitives[primInd]->mat.specualr * findColor(newpoint, hit.ind, bounce - 1, point);
 		}
 	}
 	return shade;
