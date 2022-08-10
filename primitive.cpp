@@ -31,6 +31,7 @@ double Sphere::intersect(Ray ray)
 	b = newRay.pt.dot(newRay.p0 - o) * 2;
 	d = b * b - 4 * a * ((newRay.p0 - o).dot(newRay.p0 - o) - r * r);
 	if (d < 0) return -1;
+
 	double t1, t2;
 	d = sqrt(d);
 	t1 = (-b - d) / (2 * a);
@@ -39,6 +40,7 @@ double Sphere::intersect(Ray ray)
 	else if (t1 > 0) return t1;
 	else if (t2 > 0) return t2;
 	else return -1;
+
 	//double t1, t2, t;
 	//d = sqrt(d);
 	//t1 = (-b - d) / (2 * a);
