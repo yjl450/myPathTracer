@@ -11,7 +11,7 @@ RayTracer::RayTracer(Scene s)
 	scene = std::move(s);
 }
 
-Intersection RayTracer::intersect(Ray ray, bool early_stop)
+Intersection RayTracer::intersect(Ray ray)
 {
 	// TODO: use BVH
 	double dist = std::numeric_limits<double>::infinity();
@@ -24,9 +24,6 @@ Intersection RayTracer::intersect(Ray ray, bool early_stop)
 		if (t > eps && t < dist) {
 			dist = t;
 			ind = p;
-			if (early_stop) {
-				break;
-			}
 		}
 	}
 	if (ind == -1) {
@@ -37,51 +34,53 @@ Intersection RayTracer::intersect(Ray ray, bool early_stop)
 
 bool RayTracer::visible(Eigen::Vector3d point, int lightInd)
 {
+	double dist = std::numeric_limits<double>::infinity();
 	Eigen::Vector3d color = scene.lights[lightInd]->c;
 	Eigen::Vector3d direction = -1 * scene.lights[lightInd]->v0;
 	if (scene.lights[lightInd]->kind == "point") {
 		direction = -1 * direction - point;
+		dist = (point - scene.lights[lightInd]->v0).norm();
 	}
 	direction.normalize();
 	Ray shadowRay(point + eps * direction, direction);
-	Intersection hit = intersect(shadowRay, true);
-	if (hit.ind != -1) {
+	Intersection hit = intersect(shadowRay);
+	if (hit.ind != -1 && hit.t < dist) {
 		return false;
 	}
 	return true;
 }
 
-Eigen::Vector3d RayTracer::diffuse(Eigen::Vector3d point, int primInd, int lightInd)
+Eigen::Array3d RayTracer::diffuse(Eigen::Vector3d point, int primInd, int lightInd)
 {
-	Eigen::Vector3d direction = scene.lights[lightInd]->v0;
+	Eigen::Vector3d direction = -1 * scene.lights[lightInd]->v0;
 	if (scene.lights[lightInd]->kind == "point") {
-		direction = direction - point;
+		direction = -1 * direction - point;
 	}
 	direction.normalize();
 	Eigen::Vector3d normal = scene.primitives[primInd]->normal(point);
 	double intensity = std::max(normal.dot(direction), 0.0);
-	Eigen::Vector3d color = (scene.lights[lightInd]->c).cwiseProduct(scene.primitives[primInd]->mat.diffuse);
+	Eigen::Array3d color = scene.lights[lightInd]->c * scene.primitives[primInd]->mat.diffuse;
 	return color * intensity;
 }
 
-Eigen::Vector3d RayTracer::specular(Eigen::Vector3d point, int primInd, int lightInd, Eigen::Vector3d eye, int bounce)
+Eigen::Array3d RayTracer::specular(Eigen::Vector3d point, int primInd, int lightInd, Eigen::Vector3d eye, int bounce)
 {
-	Eigen::Vector3d LiDir = scene.lights[lightInd]->v0;
+	Eigen::Vector3d LiDir = -1 * scene.lights[lightInd]->v0;
 	if (scene.lights[lightInd]->kind == "point") {
-		LiDir = LiDir - point;
+		LiDir = -1 * LiDir - point;
 	}
 	LiDir.normalize();
 	Eigen::Vector3d viewDir = (eye - point).normalized();
 	Eigen::Vector3d normal = scene.primitives[primInd]->normal(point);
 	Eigen::Vector3d halfAngle = (LiDir + viewDir).normalized();
 	double intensity = std::max(normal.dot(halfAngle), 0.0);
-	Eigen::Vector3d color = (scene.lights[lightInd]->c).cwiseProduct(scene.primitives[primInd]->mat.specualr);
+	Eigen::Array3d color = scene.lights[lightInd]->c * scene.primitives[primInd]->mat.specualr;
 	color *= std::pow(intensity, scene.primitives[primInd]->mat.shininess);
 	return color;
 }
 
-Eigen::Vector3d RayTracer::findColor(Eigen::Vector3d point, int primInd, int bounce, Eigen::Vector3d eye) {
-	Eigen::Vector3d shade = scene.primitives[primInd]->mat.ambient + scene.primitives[primInd]->mat.emission;
+Eigen::Array3d RayTracer::findColor(Eigen::Vector3d point, int primInd, int bounce, Eigen::Vector3d eye) {
+	Eigen::Array3d shade = scene.primitives[primInd]->mat.ambient + scene.primitives[primInd]->mat.emission;
 	for (int i = 0; i < scene.lights.size(); i++) {
 		if (visible(point, i)) {
 			double attenuation = 1;
@@ -97,12 +96,12 @@ Eigen::Vector3d RayTracer::findColor(Eigen::Vector3d point, int primInd, int bou
 				refDir.normalize();
 				Ray reflection(point + eps * refDir, refDir);
 				Intersection hit = intersect(reflection);
-				Eigen::Vector3d refColor(0, 0, 0);
+				Eigen::Array3d refColor(0, 0, 0);
 				if (hit.ind != -1) {
 					Eigen::Vector3d newpoint = reflection.p0 + hit.t * reflection.pt;
 					refColor = findColor(newpoint, hit.ind, bounce - 1, point);
 				}
-				shade += scene.primitives[primInd]->mat.specualr.cwiseProduct(refColor);
+				shade += scene.primitives[primInd]->mat.specualr * refColor;
 			}
 		}
 	}

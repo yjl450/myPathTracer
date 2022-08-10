@@ -12,11 +12,11 @@
 
 class Material{
 public:
-	Eigen::Vector3d ambient = Eigen::Vector3d(0.2, 0.2, 0.2);
-	Eigen::Vector3d diffuse = Eigen::Vector3d(1, 0, 0);
-	Eigen::Vector3d specualr = Eigen::Vector3d(0, 0, 0);
+	Eigen::Array3d ambient = Eigen::Array3d(0.2, 0.2, 0.2);
+	Eigen::Array3d diffuse = Eigen::Array3d(1, 0, 0);
+	Eigen::Array3d specualr = Eigen::Array3d(0, 0, 0);
 	double shininess = 0;
-	Eigen::Vector3d emission = Eigen::Vector3d(0, 0, 0);
+	Eigen::Array3d emission = Eigen::Array3d(0, 0, 0);
 };
 
 class Ray {

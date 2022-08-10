@@ -3,14 +3,14 @@
 using namespace std;
 
 // Light methods
-Directional::Directional(Eigen::Vector3d direction, Eigen::Vector3d color)
+Directional::Directional(Eigen::Vector3d direction, Eigen::Array3d color)
 {
 	kind = "directional";
 	v0 = direction;
 	c = color;
 }
 
-PointLight::PointLight(Eigen::Vector3d origin, Eigen::Vector3d color)
+PointLight::PointLight(Eigen::Vector3d origin, Eigen::Array3d color)
 {
 	kind = "point";
 	v0 = origin;
@@ -29,11 +29,11 @@ vector<double> read_vals(stringstream& s, int num) {
 }
 
 // only works on windows
-inline void reorder_color(Eigen::Vector3d& rgb) {
+inline void reorder_color(Eigen::Array3d& rgb) {
 #if _WIN32 || __linux__
-	double tmp = rgb[0];
-	rgb[0] = rgb[2];
-	rgb[2] = tmp;
+	double tmp = rgb(0);
+	rgb(0) = rgb(2);
+	rgb(2) = tmp;
 #endif
 }
 
@@ -128,7 +128,7 @@ Scene::Scene(std::ifstream& scenefile) {
 		else if (cmd == "directional" || cmd == "point") {
 			vals = read_vals(s, 6);
 			Eigen::Vector3d p(vals[0], vals[1], vals[2]);
-			Eigen::Vector3d c(vals[3], vals[4], vals[5]);
+			Eigen::Array3d c(vals[3], vals[4], vals[5]);
 			reorder_color(c);
 			if (cmd == "directional") {
 				p.normalize();

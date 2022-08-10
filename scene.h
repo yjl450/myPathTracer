@@ -12,17 +12,17 @@ class Light {
 public:
 	std::string kind;
 	Eigen::Vector3d v0;
-	Eigen::Vector3d c;
+	Eigen::Array3d c;
 };
 
 class Directional : public Light {
 public:
-	Directional(Eigen::Vector3d direction, Eigen::Vector3d color);
+	Directional(Eigen::Vector3d direction, Eigen::Array3d color);
 };
 
 class PointLight : public Light {
 public:
-	PointLight(Eigen::Vector3d origin, Eigen::Vector3d color);
+	PointLight(Eigen::Vector3d origin, Eigen::Array3d color);
 };
 
 class Scene {
