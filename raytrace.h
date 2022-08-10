@@ -18,6 +18,6 @@ public:
 	bool visible(Eigen::Vector3d point, int lightInd);
 	Eigen::Array3d findColor(Eigen::Vector3d point, int primInd, int bounce, Eigen::Vector3d eye);
 	Eigen::Array3d diffuse(Eigen::Vector3d point, int primInd, int lightInd);
-	Eigen::Array3d specular(Eigen::Vector3d point, int primInd, int lightInd, Eigen::Vector3d eye, int bounce);
+	Eigen::Array3d specular(Eigen::Vector3d point, int primInd, int lightInd, Eigen::Vector3d eye);
 	unsigned char* rayTraceInit();
 };
