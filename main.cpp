@@ -1,4 +1,5 @@
 ﻿#include <limits>
+#include <chrono>
 // External libraries
 #include <FreeImage.h>
 // Project components
@@ -34,21 +35,24 @@ int main(int argc, char** argv)
 	string outname = scene.outname;
 
 	// start shading
+	auto begin = chrono::steady_clock::now();
 	RayTracer raytracer(move(scene));
 	auto canvas = raytracer.rayTraceInit();
 
 	//save image and cleanup memory
 	FIBITMAP* img = FreeImage_ConvertFromRawBits(canvas, width, height, width * 3, 24, 0xFF0000, 0x00FF00, 0x0000FF, true);
+	auto end = chrono::steady_clock::now();
 	FreeImage_Initialise();
 	if (FreeImage_Save(FIF_PNG, img, outname.c_str(), 0)) {
-		cout << "\nImage generated at " << outname;
+		cout << "\nImage generated at " << outname << endl;
+		cout << "Time spent: " << chrono::duration_cast<chrono::milliseconds>(end - begin).count()/1000.0 << "s" << endl;
 	}
 	else {
-		cout << "\nImage generation failed";
+		cout << "\nImage generation failed" << endl;
 	}
 	FreeImage_Unload(img);
 	FreeImage_DeInitialise();
 	delete[] canvas;
-	 cout<< ", exiting renderer..." << endl;
+	cout << "Exiting renderer..." << endl;
 	return 0;
 }

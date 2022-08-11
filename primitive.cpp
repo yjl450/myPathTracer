@@ -31,7 +31,6 @@ double Sphere::intersect(Ray ray)
 	b = newRay.pt.dot(newRay.p0 - o) * 2;
 	d = b * b - 4 * a * ((newRay.p0 - o).dot(newRay.p0 - o) - r * r);
 	if (d < 0) return -1;
-
 	double t1, t2;
 	d = sqrt(d);
 	t1 = (-b - d) / (2 * a);
@@ -40,21 +39,6 @@ double Sphere::intersect(Ray ray)
 	else if (t1 > 0) return t1;
 	else if (t2 > 0) return t2;
 	else return -1;
-
-	//double t1, t2, t;
-	//d = sqrt(d);
-	//t1 = (-b - d) / (2 * a);
-	//t2 = (-b + d) / (2 * a);
-	//if (t1 > 0 && t2 > 0) t = (t1 < t2) ? t1 : t2;
-	//else if (t1 > 0) t = t1;
-	//else if (t2 > 0) t = t2;
-	//else return -1;
-	//if (!transformed) {
-	//	return t;
-	//}
-	//Eigen::Vector3d point = newRay.p0 + t * newRay.pt;
-	//point = trans * point;
-	//return (point - ray.p0).norm();
 }
 
 Eigen::Vector3d Sphere::normal(Eigen::Vector3d point)
@@ -78,10 +62,9 @@ Triangle::Triangle(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vect
 	v1 = transformation * vertex1;
 	v2 = transformation * vertex2;
 	mat = material;
-	edge1 = vertex1 - vertex0;
-	edge2 = vertex2 - vertex0;
+	edge1 = v1 - v0;
+	edge2 = v2 - v0;
 	n = edge1.cross(edge2);
-	n = transformation.linear().inverse().transpose() * n;
 	n.normalize();
 }
 

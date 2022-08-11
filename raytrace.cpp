@@ -149,6 +149,5 @@ unsigned char* RayTracer::rayTraceInit()
 		NormalizeColor(shade);
 		std::copy_n(shade.data(), 3, canvas + i);
 	}
-	std::cout << canvas[0] << std::endl;
 	return canvas;
 }
