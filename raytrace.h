@@ -1,7 +1,8 @@
 #pragma once
-#include "scene.h"
-
 #include <algorithm>
+#include "scene.h"
+#include "progressbar.hpp" // https://github.com/gipert/progressbar
+
 class Intersection {
 public:
 	double t = -1;

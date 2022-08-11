@@ -131,11 +131,18 @@ unsigned char* RayTracer::rayTraceInit()
 {
 	auto canvas = new unsigned char[scene.height * scene.width * 3];
 	int x = 0, y = 0;
-	//TODO: add progress bar
+
+	// setup progress bar
+	int onePercent = (scene.height * scene.width * 3) / 100;
+	progressbar bar(100);
+	bar.set_done_char("¨€");
+
 	for (int i = 0; i < scene.height * scene.width * 3; i += 3) {
 		y = i / 3 / scene.width;
 		x = (i / 3) - (i / 3 / scene.width) * scene.width;
-
+		if (i % onePercent == 0) {
+			bar.update();
+		}
 		// camera (primary) ray generation
 		Ray cameraRay = camRay(x, y);
 
