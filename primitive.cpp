@@ -13,9 +13,14 @@ Sphere::Sphere(Eigen::Vector3d center, double radius, Material material, Eigen::
 	o = center;
 	r = radius;
 	mat = material;
+	Eigen::Vector3d min_corner, max_corner;
+	min_corner = o.array() - r;
+	max_corner = o.array() + r;
+	bbox = Eigen::AlignedBox3d(min_corner, max_corner);
 	if (trans_flag) {
 		transformed = true;
 		trans = transformation;
+		bbox.transform(trans);
 	}
 }
 
@@ -66,6 +71,16 @@ Triangle::Triangle(Eigen::Vector3d vertex0, Eigen::Vector3d vertex1, Eigen::Vect
 	edge2 = v2 - v0;
 	n = edge1.cross(edge2);
 	n.normalize();
+	Eigen::Vector3d min_corner, max_corner;
+	min_corner <<
+		std::min(std::min(v0[0], v1[0]), v2[0]),
+		std::min(std::min(v0[1], v1[1]), v2[1]),
+		std::min(std::min(v0[2], v1[2]), v2[2]);
+	max_corner <<
+		std::max(std::max(v0[0], v1[0]), v2[0]),
+		std::max(std::max(v0[1], v1[1]), v2[1]),
+		std::max(std::max(v0[2], v1[2]), v2[2]);
+	bbox = Eigen::AlignedBox3d(min_corner, max_corner);
 }
 
 Eigen::Vector3d Triangle::barycentric(Eigen::Vector3d point) {
@@ -107,7 +122,6 @@ double Triangle::intersect(Ray ray)
 		return -1;
 	}
 	return t;
-	return -1;
 }
 
 Eigen::Vector3d Triangle::normal(Eigen::Vector3d point)

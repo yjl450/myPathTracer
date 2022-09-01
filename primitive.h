@@ -26,10 +26,17 @@ public:
 	Ray(Eigen::Vector3d p0, Eigen::Vector3d pt);
 };
 
+
+//class PrimInterface {
+//public:
+//
+//};
+
 // abstract class for all primitives
 class Primitive {
 public:
 	Material mat;
+	Eigen::AlignedBox3d bbox;
 	virtual double intersect(Ray ray) = 0;
 	virtual Eigen::Vector3d normal(Eigen::Vector3d point) = 0;
 };
