@@ -39,7 +39,7 @@ public:
 	Eigen::Vector3d cameraUp;
 	double fov = 0;
 	// primitives
-	std::vector<std::unique_ptr<Primitive>> primitives;
+	std::vector<std::shared_ptr<Primitive>> primitives;
 	// lighting
 	std::vector<double> attenuation{ 1, 0, 0 };
 	std::vector<std::unique_ptr<Light>> lights;

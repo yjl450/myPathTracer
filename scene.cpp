@@ -94,10 +94,10 @@ Scene::Scene(std::ifstream& scenefile) {
 			Eigen::Vector3d center;
 			center << vals[0], vals[1], vals[2];
 			if (trans.isApprox(trans.Identity())) {
-				primitives.push_back(make_unique<Sphere>(center, vals[3], matMem, trans, false));
+				primitives.push_back(make_shared<Sphere>(center, vals[3], matMem, trans, false));
 			}
 			else {
-				primitives.push_back(make_unique<Sphere>(center, vals[3], matMem, trans, true));
+				primitives.push_back(make_shared<Sphere>(center, vals[3], matMem, trans, true));
 			}
 		}
 		else if (cmd == "tri") {
@@ -106,7 +106,7 @@ Scene::Scene(std::ifstream& scenefile) {
 			v0 = vertices[(int)vals[0]];
 			v1 = vertices[(int)vals[1]];
 			v2 = vertices[(int)vals[2]];
-			primitives.push_back(make_unique<Triangle>(v0, v1, v2, trans, matMem));
+			primitives.push_back(make_shared<Triangle>(v0, v1, v2, trans, matMem));
 		}
 		else if (cmd == "trinormal") {
 			// TODO: untested
@@ -121,7 +121,7 @@ Scene::Scene(std::ifstream& scenefile) {
 			n0.normalize();
 			n1.normalize();
 			n2.normalize();
-			unique_ptr<TriNormal> temp = make_unique<TriNormal>(v0, v1, v2, trans, matMem);
+			auto temp = make_shared<TriNormal>(v0, v1, v2, trans, matMem);
 			temp->setNormal(n0, n1, n2);
 			primitives.push_back(move(temp));
 		}
