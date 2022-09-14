@@ -77,3 +77,10 @@ public:
 	void setNormal(Eigen::Vector3d normal0, Eigen::Vector3d normal1, Eigen::Vector3d normal2);
 	virtual Eigen::Vector3d normal(Eigen::Vector3d point);
 };
+
+
+class Intersection {
+public:
+	double t = -1;
+	std::shared_ptr<Primitive> prim = nullptr;
+};

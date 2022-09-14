@@ -3,7 +3,6 @@
 #include <cassert>
 #include "primitive.h"
 
-
 enum Axis { x = 0, y = 1, z = 2 };
 
 class BVHnode {
@@ -15,7 +14,7 @@ public:
 
 	BVHnode(Eigen::AlignedBox3d bbox, std::shared_ptr<BVHnode> l, std::shared_ptr<BVHnode> r);
 	BVHnode(Eigen::AlignedBox3d bbox, std::vector<std::shared_ptr<Primitive>> prims);
-	double intersect(Ray ray);
+	Intersection intersect(Ray ray);
 };
 
 Axis findAxis(std::vector<std::shared_ptr<Primitive>> primitives);

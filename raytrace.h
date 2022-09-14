@@ -1,17 +1,13 @@
 #pragma once
 #include <algorithm>
 #include "scene.h"
+#include "bvh.h"
 #include "progressbar.hpp" // https://github.com/gipert/progressbar
-
-class Intersection {
-public:
-	double t = -1;
-	int ind = -1;
-};
 
 class RayTracer {
 public:
 	Scene scene;
+	std::shared_ptr<BVHnode> bvhTree;
 
 	RayTracer(Scene s);
 	Intersection intersect(Ray ray);

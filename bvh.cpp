@@ -18,10 +18,49 @@ BVHnode::BVHnode(Eigen::AlignedBox3d bbox, std::vector<std::shared_ptr<Primitive
 	primitives = prims;
 }
 
-double BVHnode::intersect(Ray ray)
-{
+Intersection bbox_hit(Ray ray, Eigen::AlignedBox3d bbox) {
+	//TODO: fix ray box intersection
+	return { -1, nullptr };
+}
 
-	return -1;
+Intersection BVHnode::intersect(Ray ray)
+{
+	if (bbox_hit(ray, box).t == -1) {
+		return { -1 , nullptr };
+	}
+	if (left == nullptr && right == nullptr) {
+		double min_t = -1;
+		double temp_t = -1;
+		std::shared_ptr<Primitive> prim = nullptr;
+		for (auto p : primitives) {
+			temp_t = p->intersect(ray);
+			if (temp_t > 0 && (min_t == -1 || temp_t < min_t)) {
+				min_t = temp_t;
+				prim = p;
+			}
+		}
+		return Intersection{ min_t, prim };
+	}
+	Intersection l_intersect = left->intersect(ray);
+	Intersection r_intersect = right->intersect(ray);
+	if (l_intersect.t != -1 && r_intersect.t != -1) {
+		double min_t = std::min(l_intersect.t, r_intersect.t);
+		if (l_intersect.t == min_t) {
+			return l_intersect;
+		}
+		else {
+			return r_intersect;
+		}
+	}
+	else if (l_intersect.t == -1 && r_intersect.t == -1) {
+		return Intersection{ -1, nullptr };
+	}
+	else if (l_intersect.t == -1) {
+		return r_intersect;
+	}
+	else {
+		return l_intersect;
+	}
 }
 
 Axis findAxis(std::vector<std::shared_ptr<Primitive>> primitives) {
@@ -107,7 +146,7 @@ std::shared_ptr<BVHnode> buildTree(std::vector<std::shared_ptr<Primitive>> primi
 	assert(bbox.isEmpty());
 
 	if (primitives.size() <= LEAF_PRIM_COUNT) {
-		for (auto p : primitives) {
+		for (std::shared_ptr<Primitive> p : primitives) {
 			bbox.extend(p->bbox);
 		}
 		return std::make_shared<BVHnode>(bbox, primitives);

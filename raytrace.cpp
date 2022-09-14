@@ -1,5 +1,4 @@
 #include "raytrace.h"
-#include "bvh.h"
 
 void NormalizeColor(Eigen::Vector3d& color) {
 	color[0] = (color[0] < 1) ? color[0] * 255 : 255;
@@ -14,23 +13,24 @@ RayTracer::RayTracer(Scene s)
 
 Intersection RayTracer::intersect(Ray ray)
 {
-	// TODO: use BVH
-	double dist = std::numeric_limits<double>::infinity();
-	double t = -1;
-	int ind = -1;
+	//// TODO: use BVH
+	//double dist = std::numeric_limits<double>::infinity();
+	//double t = -1;
+	//std::shared_ptr<Primitive> prim = nullptr;
 
-	for (int p = 0; p < scene.primitives.size(); p++)
-	{
-		t = scene.primitives[p]->intersect(ray);
-		if (t > eps && t < dist) {
-			dist = t;
-			ind = p;
-		}
-	}
-	if (ind == -1) {
-		dist = -1;
-	}
-	return Intersection{ dist, ind };
+	//for (int p = 0; p < scene.primitives.size(); p++)
+	//{
+	//	t = scene.primitives[p]->intersect(ray);
+	//	if (t > eps && t < dist) {
+	//		dist = t;
+	//		prim = scene.primitives[p];
+	//	}
+	//}
+	//if (prim == nullptr) {
+	//	dist = -1;
+	//}
+	//return Intersection{ dist, prim };
+	return bvhTree->intersect(ray);
 }
 
 bool RayTracer::visible(Eigen::Vector3d point, int lightInd)
@@ -45,7 +45,7 @@ bool RayTracer::visible(Eigen::Vector3d point, int lightInd)
 	}
 	Ray shadowRay(point + eps * direction, direction);
 	Intersection hit = intersect(shadowRay);
-	if (hit.ind != -1 && hit.t < dist) {
+	if (hit.prim != nullptr && hit.t < dist) {
 		return false;
 	}
 	return true;
@@ -104,9 +104,9 @@ Eigen::Array3d RayTracer::findColor(Eigen::Vector3d point, std::shared_ptr<Primi
 	if (bounce > 1 && prim->mat.specualr.sum() > eps) {
 		Ray reflection = reflRay(point, prim, eye);
 		Intersection hit = intersect(reflection);
-		if (hit.ind != -1) {
+		if (hit.prim != nullptr) {
 			Eigen::Vector3d newpoint = point + hit.t * reflection.pt;
-			shade += prim->mat.specualr * findColor(newpoint, scene.primitives[hit.ind], bounce - 1, point);
+			shade += prim->mat.specualr * findColor(newpoint, hit.prim, bounce - 1, point);
 		}
 	}
 	return shade;
@@ -133,6 +133,7 @@ unsigned char* RayTracer::rayTraceInit()
 	auto canvas = new unsigned char[scene.height * scene.width * 3];
 	int x = 0, y = 0;
 
+	bvhTree = buildTree(scene.primitives);
 	// setup progress bar
 	int onePercent = (scene.height * scene.width * 3) / 100;
 	progressbar bar(100);
@@ -150,9 +151,9 @@ unsigned char* RayTracer::rayTraceInit()
 		// intersection test
 		Intersection hit = intersect(cameraRay);
 		Eigen::Vector3d shade(0, 0, 0);
-		if (hit.ind != -1) {
+		if (hit.prim != nullptr) {
 			Eigen::Vector3d point = cameraRay.p0 + hit.t * cameraRay.pt;
-			shade = findColor(point, scene.primitives[hit.ind], scene.maxdepth, scene.cameraFrom);
+			shade = findColor(point, hit.prim, scene.maxdepth, scene.cameraFrom);
 		}
 		NormalizeColor(shade);
 		std::copy_n(shade.data(), 3, canvas + i);
