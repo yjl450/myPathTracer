@@ -18,14 +18,33 @@ BVHnode::BVHnode(Eigen::AlignedBox3d bbox, std::vector<std::shared_ptr<Primitive
 	primitives = prims;
 }
 
-Intersection bbox_hit(Ray ray, Eigen::AlignedBox3d bbox) {
-	//TODO: fix ray box intersection
-	return { -1, nullptr };
+bool bbox_hit(Ray ray, Eigen::AlignedBox3d bbox) {
+	Eigen::Vector3d maxpoint = bbox.max();
+	Eigen::Vector3d minpoint = bbox.min();
+	double t_min, t_max, tx1, tx2, ty1, ty2, tz1, tz2;
+	tx1 = (minpoint[0] - ray.p0[0]) * ray.rpt[0];
+	tx2 = (maxpoint[0] - ray.p0[0]) * ray.rpt[0];
+
+	t_min = std::min(tx1, tx2);
+	t_max = std::max(tx1, tx2);
+
+	ty1 = (minpoint[1] - ray.p0[1]) * ray.rpt[1];
+	ty2 = (maxpoint[1] - ray.p0[1]) * ray.rpt[1];
+
+	t_min = std::max(t_min, std::min(ty1, ty2));
+	t_max = std::min(t_max, std::max(ty1, ty2));
+
+	tz1 = (minpoint[2] - ray.p0[2]) * ray.rpt[2];
+	tz2 = (maxpoint[2] - ray.p0[2]) * ray.rpt[2];
+
+	t_min = std::max(t_min, std::min(tz1, tz2));
+	t_max = std::min(t_max, std::max(tz1, tz2));
+	return (t_max > 0 && t_max >= t_min);
 }
 
 Intersection BVHnode::intersect(Ray ray)
 {
-	if (bbox_hit(ray, box).t == -1) {
+	if (!bbox_hit(ray, box)) {
 		return { -1 , nullptr };
 	}
 	if (left == nullptr && right == nullptr) {

@@ -5,6 +5,8 @@ Ray::Ray(Eigen::Vector3d v0, Eigen::Vector3d vt)
 {
 	p0 = v0;
 	pt = vt.normalized();
+	rpt << 1 / (pt[0] + eps), 1 / (pt[1] + eps), 1 / (pt[2] + eps);
+	rpt.normalize();
 }
 
 // Sphere methods

@@ -23,6 +23,7 @@ class Ray {
 public:
 	Eigen::Vector3d p0;
 	Eigen::Vector3d pt;
+	Eigen::Vector3d rpt; // 1/pt
 	Ray(Eigen::Vector3d p0, Eigen::Vector3d pt);
 };
 
