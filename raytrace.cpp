@@ -13,24 +13,25 @@ RayTracer::RayTracer(Scene s)
 
 Intersection RayTracer::intersect(Ray ray)
 {
-	//// TODO: use BVH
-	//double dist = std::numeric_limits<double>::infinity();
-	//double t = -1;
-	//std::shared_ptr<Primitive> prim = nullptr;
+	if (scene.BVHtree != nullptr) {
+		return scene.BVHtree->intersect(ray);
+	}
+	double dist = std::numeric_limits<double>::infinity();
+	double t = -1;
+	std::shared_ptr<Primitive> prim = nullptr;
 
-	//for (int p = 0; p < scene.primitives.size(); p++)
-	//{
-	//	t = scene.primitives[p]->intersect(ray);
-	//	if (t > eps && t < dist) {
-	//		dist = t;
-	//		prim = scene.primitives[p];
-	//	}
-	//}
-	//if (prim == nullptr) {
-	//	dist = -1;
-	//}
-	//return Intersection{ dist, prim };
-	return bvhTree->intersect(ray);
+	for (int p = 0; p < scene.primitives.size(); p++)
+	{
+		t = scene.primitives[p]->intersect(ray);
+		if (t > eps && t < dist) {
+			dist = t;
+			prim = scene.primitives[p];
+		}
+	}
+	if (prim == nullptr) {
+		dist = -1;
+	}
+	return Intersection{ dist, prim };
 }
 
 bool RayTracer::visible(Eigen::Vector3d point, int lightInd)
@@ -132,8 +133,6 @@ unsigned char* RayTracer::rayTraceInit()
 {
 	auto canvas = new unsigned char[scene.height * scene.width * 3];
 	int x = 0, y = 0;
-
-	bvhTree = buildTree(scene.primitives);
 	// setup progress bar
 	int onePercent = (scene.height * scene.width * 3) / 100;
 	progressbar bar(100);

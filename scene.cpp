@@ -190,4 +190,5 @@ Scene::Scene(std::ifstream& scenefile) {
 			trans = trans * Eigen::AngleAxis(vals[3] * PI / 180, axis);
 		}
 	}
+	BVHtree = buildTree(primitives);
 }

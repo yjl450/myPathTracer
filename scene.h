@@ -1,6 +1,7 @@
 #pragma once
 
 #include "primitive.h"
+#include "bvh.h"
 #include <fstream>
 #include <cassert>
 #include <sstream>
@@ -40,6 +41,7 @@ public:
 	double fov = 0;
 	// primitives
 	std::vector<std::shared_ptr<Primitive>> primitives;
+	std::shared_ptr<BVHnode> BVHtree = nullptr;
 	// lighting
 	std::vector<double> attenuation{ 1, 0, 0 };
 	std::vector<std::unique_ptr<Light>> lights;
