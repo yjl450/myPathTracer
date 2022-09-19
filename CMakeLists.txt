@@ -8,7 +8,7 @@ find_package(Eigen3 REQUIRED)
 
 find_package(freeimage REQUIRED)
 
-add_executable (myPathTracer "main.cpp" "primitive.cpp" "primitive.h" "scene.cpp" "scene.h" "raytrace.cpp" "raytrace.h"  "bvh.h" "bvh.cpp" ${include} "light.h" "light.cpp")
+add_executable (myPathTracer "main.cpp" "primitive.cpp" "primitive.h" "scene.cpp" "scene.h" "pathtracer.cpp" "pathtracer.h"  "bvh.h" "bvh.cpp" ${include} "light.h" "light.cpp")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET myPathTracer PROPERTY CXX_STANDARD 20)

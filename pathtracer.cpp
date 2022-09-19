@@ -1,4 +1,4 @@
-#include "raytrace.h"
+#include "pathtracer.h"
 
 void NormalizeColor(Eigen::Vector3d& color) {
 	color[0] = (color[0] < 1) ? color[0] * 255 : 255;
@@ -6,12 +6,12 @@ void NormalizeColor(Eigen::Vector3d& color) {
 	color[2] = (color[2] < 1) ? color[2] * 255 : 255;
 }
 
-RayTracer::RayTracer(Scene s)
+PathTracer::PathTracer(Scene s)
 {
 	scene = std::move(s);
 }
 
-Intersection RayTracer::intersect(Ray ray)
+Intersection PathTracer::intersect(Ray ray)
 {
 	if (scene.BVHtree != nullptr) {
 		return scene.BVHtree->intersect(ray);
@@ -34,7 +34,7 @@ Intersection RayTracer::intersect(Ray ray)
 	return Intersection{ dist, prim };
 }
 
-bool RayTracer::visible(Eigen::Vector3d point, int lightInd)
+bool PathTracer::visible(Eigen::Vector3d point, int lightInd)
 {
 	double dist = std::numeric_limits<double>::infinity();
 	Eigen::Vector3d color = scene.lights[lightInd]->c;
@@ -52,7 +52,7 @@ bool RayTracer::visible(Eigen::Vector3d point, int lightInd)
 	return true;
 }
 
-Eigen::Array3d RayTracer::diffuse(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int lightInd)
+Eigen::Array3d PathTracer::diffuse(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int lightInd)
 {
 	Eigen::Vector3d LiDir = scene.lights[lightInd]->v0;
 		Eigen::Vector3d a;
@@ -66,7 +66,7 @@ Eigen::Array3d RayTracer::diffuse(Eigen::Vector3d point, std::shared_ptr<Primiti
 	return color * intensity;
 }
 
-Eigen::Array3d RayTracer::specular(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int lightInd, Eigen::Vector3d eye)
+Eigen::Array3d PathTracer::specular(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int lightInd, Eigen::Vector3d eye)
 {
 	Eigen::Vector3d LiDir = scene.lights[lightInd]->v0;
 	if (scene.lights[lightInd]->kind == "point") {
@@ -82,7 +82,7 @@ Eigen::Array3d RayTracer::specular(Eigen::Vector3d point, std::shared_ptr<Primit
 	return color;
 }
 
-Ray RayTracer::reflRay(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, Eigen::Vector3d eye) {
+Ray PathTracer::reflRay(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, Eigen::Vector3d eye) {
 	Eigen::Vector3d normal = prim->normal(point);
 	Eigen::Vector3d viewDir = (eye - point).normalized();
 	Eigen::Vector3d refDir = 2 * normal * viewDir.dot(normal) - viewDir;
@@ -90,7 +90,7 @@ Ray RayTracer::reflRay(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, E
 	return Ray(point + eps * refDir, refDir);
 }
 
-Eigen::Array3d RayTracer::findColor(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int bounce, Eigen::Vector3d eye) {
+Eigen::Array3d PathTracer::findColor(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int bounce, Eigen::Vector3d eye) {
 	Eigen::Array3d shade = prim->mat.ambient + prim->mat.emission;
 	for (int i = 0; i < scene.lights.size(); i++) {
 		if (visible(point, i)) {
@@ -113,7 +113,7 @@ Eigen::Array3d RayTracer::findColor(Eigen::Vector3d point, std::shared_ptr<Primi
 	return shade;
 }
 
-Ray RayTracer::camRay(int x, int y)
+Ray PathTracer::camRay(int x, int y)
 {
 	Eigen::Vector3d w, u, v;
 	w = (scene.cameraFrom - scene.cameraAt).normalized();
@@ -129,7 +129,7 @@ Ray RayTracer::camRay(int x, int y)
 }
 
 
-unsigned char* RayTracer::rayTraceInit()
+unsigned char* PathTracer::pathTraceInit()
 {
 	auto canvas = new unsigned char[scene.height * scene.width * 3];
 	int x = 0, y = 0;
