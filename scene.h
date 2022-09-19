@@ -1,6 +1,4 @@
 #pragma once
-
-#include "primitive.h"
 #include "bvh.h"
 #include <fstream>
 #include <cassert>
@@ -8,23 +6,8 @@
 #include <vector>
 #include <stack>
 #include <memory>
-
-class Light {
-public:
-	std::string kind;
-	Eigen::Vector3d v0;
-	Eigen::Array3d c;
-};
-
-class Directional : public Light {
-public:
-	Directional(Eigen::Vector3d direction, Eigen::Array3d color);
-};
-
-class PointLight : public Light {
-public:
-	PointLight(Eigen::Vector3d origin, Eigen::Array3d color);
-};
+#include "primitive.h"
+#include "light.h"
 
 class Scene {
 public:

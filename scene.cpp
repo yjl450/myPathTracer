@@ -2,21 +2,6 @@
 
 using namespace std;
 
-// Light methods
-Directional::Directional(Eigen::Vector3d direction, Eigen::Array3d color)
-{
-	kind = "directional";
-	v0 = direction;
-	c = color;
-}
-
-PointLight::PointLight(Eigen::Vector3d origin, Eigen::Array3d color)
-{
-	kind = "point";
-	v0 = origin;
-	c = color;
-}
-
 // Utils
 vector<double> read_vals(stringstream& s, int num) {
 	double val;
@@ -138,6 +123,9 @@ Scene::Scene(std::ifstream& scenefile) {
 				lights.push_back(make_unique<PointLight>(p, c));
 			}
 		}
+		else if (cmd == "quadLight") {
+
+		}
 		else if (cmd == "ambient") {
 			vals = read_vals(s, 3);
 			matMem.ambient << vals[0], vals[1], vals[2];
@@ -192,3 +180,4 @@ Scene::Scene(std::ifstream& scenefile) {
 	}
 	BVHtree = buildTree(primitives);
 }
+
