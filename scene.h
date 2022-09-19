@@ -28,8 +28,11 @@ public:
 	// lighting
 	std::vector<double> attenuation{ 1, 0, 0 };
 	std::vector<std::unique_ptr<Light>> lights;
-	//output
+	// output
 	std::string outname = "output.png";
+	// sampling
+	int sample = 1;
+	bool stratify = false;
 
 	Scene() = default;
 	Scene(std::ifstream& scenefile);

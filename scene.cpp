@@ -124,7 +124,12 @@ Scene::Scene(std::ifstream& scenefile) {
 			}
 		}
 		else if (cmd == "quadLight") {
-
+			vals = read_vals(s, 12);
+			Eigen::Vector3d origin(vals[0], vals[1], vals[2]);
+			Eigen::Vector3d edge1(vals[3], vals[4], vals[5]);
+			Eigen::Vector3d edge2(vals[6], vals[7], vals[8]);
+			Eigen::Array3d c(vals[9], vals[10], vals[11]);
+			lights.push_back(make_unique<QuadLight>(origin, edge1, edge2, c));
 		}
 		else if (cmd == "ambient") {
 			vals = read_vals(s, 3);
@@ -176,6 +181,17 @@ Scene::Scene(std::ifstream& scenefile) {
 			Eigen::Vector3d axis(vals[0], vals[1], vals[2]);
 			axis.normalize();
 			trans = trans * Eigen::AngleAxis(vals[3] * PI / 180, axis);
+		}
+		else if (cmd == "lightsamples") {
+			vals = read_vals(s, 1);
+			sample = (int)vals[0];
+		}
+		else if (cmd == "lightstratify") {
+			string option;
+			s >> option;
+			if (option == "on") {
+				stratify = true;
+			}
 		}
 	}
 	BVHtree = buildTree(primitives);
