@@ -37,7 +37,7 @@ int main(int argc, char** argv)
 
 	// start shading/integration
 	auto begin = chrono::steady_clock::now();
-	PathTracer pathtracer(move(scene));
+	PathTracer pathtracer(move(scene), 10);
 	auto canvas = pathtracer.pathTraceInit();
 
 	//save image and cleanup memory

@@ -25,6 +25,9 @@ public:
 	Eigen::Vector3d vc;
 	Eigen::Vector3d vd;
 	Eigen::Vector3d n;
+	Eigen::Vector3d e1;
+	Eigen::Vector3d e2;
+	double area;
 
 	QuadLight(Eigen::Vector3d origin, Eigen::Vector3d edge1, Eigen::Vector3d edge2, Eigen::Array3d color);
 	double intersect(Ray ray);

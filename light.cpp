@@ -23,7 +23,10 @@ QuadLight::QuadLight(Eigen::Vector3d origin, Eigen::Vector3d edge1, Eigen::Vecto
 	vb = edge1 + va;
 	vc = edge2 + va;
 	vd = edge1 + edge2 + va;
+	e1 = edge1;
+	e2 = edge2;
 	c = color;
+	area = edge1.cross(edge2).norm();
 	n = edge1.cross(edge2).normalized();
 }
 

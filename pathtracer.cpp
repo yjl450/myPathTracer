@@ -6,9 +6,11 @@ void NormalizeColor(Eigen::Vector3d& color) {
 	color[2] = (color[2] < 1) ? color[2] * 255 : 255;
 }
 
-PathTracer::PathTracer(Scene s)
+PathTracer::PathTracer(Scene s, double randomSeed)
 {
 	scene = std::move(s);
+	seed = randomSeed;
+	random = std::default_random_engine(seed);
 }
 
 Intersection PathTracer::intersect(Ray ray)
@@ -158,7 +160,6 @@ Eigen::Array3d PathTracer::analytic(Eigen::Vector3d r, std::shared_ptr<Primitive
 			color += prim->mat.diffuse * scene.polyLights[i]->c * (phi(r, i).dot(n)) / PI;
 		}
 		else {
-			//std::cout << prim->mat.emission << std::endl;
 			color += prim->mat.emission;
 		}
 	}
@@ -198,6 +199,28 @@ bool PathTracer::lightVisible(Ray ray, int lightInd, double hit) {
 		return (hit > t);
 	}
 }
+
+int PathTracer::visibility(Eigen::Vector3d x1, Eigen::Vector3d x2) {
+	//x1: point of primitive
+	//x2: point of light
+	Ray r(x1, x2 - x1);
+	Intersection hit = intersect(r);
+	if (hit.t < (x1 - x2).norm()) {
+		return 0;
+	}
+	return 1;
+}
+
+double PathTracer::geometry(std::shared_ptr<Primitive> prim, int lightInd, Eigen::Vector3d x1, Eigen::Vector3d x2) {
+	double R = pow((x1 - x2).norm(), 2);
+	Eigen::Vector3d n, nl, dir;
+	n = prim->normal(x1);
+	nl = -1 * scene.polyLights[lightInd]->n;
+	dir = (x2 - x1).normalized();
+	return (1 / R) * (n.dot(dir)) * (nl.dot(dir));
+}
+
+//Eigen::Array3d phoneBRDF(std::shared_ptr<Primitive> prim)
 
 unsigned char* PathTracer::pathTraceInit()
 {
