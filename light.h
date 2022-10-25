@@ -20,8 +20,13 @@ public:
 
 class QuadLight : public Light {
 public:
-	Eigen::Vector3d a;
-	Eigen::Vector3d ab;
-	Eigen::Vector3d ac;
+	Eigen::Vector3d va;
+	Eigen::Vector3d vb;
+	Eigen::Vector3d vc;
+	Eigen::Vector3d vd;
+	Eigen::Vector3d n;
+
 	QuadLight(Eigen::Vector3d origin, Eigen::Vector3d edge1, Eigen::Vector3d edge2, Eigen::Array3d color);
+	double intersect(Ray ray);
+	Eigen::Vector3d barycentric(Eigen::Vector3d point, int partition);
 };

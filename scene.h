@@ -27,12 +27,15 @@ public:
 	std::shared_ptr<BVHnode> BVHtree = nullptr;
 	// lighting
 	std::vector<double> attenuation{ 1, 0, 0 };
-	std::vector<std::unique_ptr<Light>> lights;
+	std::vector<std::unique_ptr<Light>> simpleLights;
+	std::vector<std::unique_ptr<QuadLight>> polyLights;
 	// output
 	std::string outname = "output.png";
 	// sampling
 	int sample = 1;
 	bool stratify = false;
+	// integrator
+	std::string integrator = "raytracer";
 
 	Scene() = default;
 	Scene(std::ifstream& scenefile);

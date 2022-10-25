@@ -27,12 +27,6 @@ public:
 	Ray(Eigen::Vector3d p0, Eigen::Vector3d pt);
 };
 
-
-//class PrimInterface {
-//public:
-//
-//};
-
 // abstract class for all primitives
 class Primitive {
 public:

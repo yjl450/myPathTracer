@@ -28,13 +28,14 @@ int main(int argc, char** argv)
 	Scene scene(scenefile);
 	cout << "\tOutput: " << scene.outname << " (" << scene.width << "x" << scene.height << ")" << endl;
 	cout << "\t" << scene.primitives.size() << " Primitives" << endl;
-	cout << "\t" << scene.lights.size() << " Lights" << endl;
+	cout << "\t" << scene.simpleLights.size() + scene.polyLights.size() << " Lights" << endl;
 	cout << "\tMax recursion depth: " << scene.maxdepth << endl;
+	cout << "\tIntegrator: " << scene.integrator << endl;
 	int width = scene.width;
 	int height = scene.height;
 	string outname = scene.outname;
 
-	// start shading
+	// start shading/integration
 	auto begin = chrono::steady_clock::now();
 	PathTracer pathtracer(move(scene));
 	auto canvas = pathtracer.pathTraceInit();

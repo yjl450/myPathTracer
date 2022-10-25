@@ -117,10 +117,10 @@ Scene::Scene(std::ifstream& scenefile) {
 			reorder_color(c);
 			if (cmd == "directional") {
 				p.normalize();
-				lights.push_back(make_unique<Directional>(p, c));
+				simpleLights.push_back(make_unique<Directional>(p, c));
 			}
 			else {
-				lights.push_back(make_unique<PointLight>(p, c));
+				simpleLights.push_back(make_unique<PointLight>(p, c));
 			}
 		}
 		else if (cmd == "quadLight") {
@@ -129,7 +129,8 @@ Scene::Scene(std::ifstream& scenefile) {
 			Eigen::Vector3d edge1(vals[3], vals[4], vals[5]);
 			Eigen::Vector3d edge2(vals[6], vals[7], vals[8]);
 			Eigen::Array3d c(vals[9], vals[10], vals[11]);
-			lights.push_back(make_unique<QuadLight>(origin, edge1, edge2, c));
+			reorder_color(c);
+			polyLights.push_back(make_unique<QuadLight>(origin, edge1, edge2, c));
 		}
 		else if (cmd == "ambient") {
 			vals = read_vals(s, 3);
@@ -192,6 +193,9 @@ Scene::Scene(std::ifstream& scenefile) {
 			if (option == "on") {
 				stratify = true;
 			}
+		}
+		else if (cmd == "integrator") {
+			s >> integrator;
 		}
 	}
 	BVHtree = buildTree(primitives);

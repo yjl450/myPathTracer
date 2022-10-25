@@ -155,7 +155,7 @@ std::vector<std::shared_ptr<Primitive>> reorder(std::vector<std::shared_ptr<Prim
 int splitInd(std::vector<std::shared_ptr<Primitive>> primitives)
 {
 // TODO: implement SAH
-	return primitives.size()/2;
+	return primitives.size() * 0.5;
 }
 
 
