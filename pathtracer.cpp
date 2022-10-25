@@ -182,6 +182,23 @@ Eigen::Array3d PathTracer::integratorDispatch(Eigen::Vector3d point, std::shared
 	}
 }
 
+bool PathTracer::lightVisible(Ray ray, int lightInd, double hit) {
+	double lightDepth = -1.0;
+	double t = -1.0;
+	int lightVisible = -1;
+	if (hit == -2) {
+		Intersection primHit = intersect(ray);
+		hit = primHit.t;
+	}
+	t = scene.polyLights[lightInd]->intersect(ray);
+	if (hit == -1) {
+		return (t != -1);
+	}
+	else {
+		return (hit > t);
+	}
+}
+
 unsigned char* PathTracer::pathTraceInit()
 {
 	auto canvas = new unsigned char[scene.height * scene.width * 3];
@@ -203,23 +220,28 @@ unsigned char* PathTracer::pathTraceInit()
 		// intersection test
 		Intersection hit = intersect(cameraRay);
 		Eigen::Vector3d shade(0, 0, 0);
+
 		double lightDepth = -1.0;
-		double tempDepth = -1.0;
-		int lightVisible = -1;
-		for (int lightInd = 0; lightInd < scene.polyLights.size(); lightInd++) {
-			tempDepth = scene.polyLights[lightInd]->intersect(cameraRay);
-			if (tempDepth > 0 && (tempDepth < lightDepth || lightDepth < 0)) {
-				lightDepth = tempDepth;
-				lightVisible = lightInd;
+		double lt = -1.0;
+		int lightInd = -1;
+		for (int l = 0; l < scene.polyLights.size(); l++) {
+			lt = scene.polyLights[l]->intersect(cameraRay);
+			if (lt > 0 && (lt < lightDepth || lightDepth < 0)) {
+				lightDepth = lt;
+				lightInd = l;
 			}
 		}
-		if (hit.prim != nullptr && (lightDepth < 0 || hit.t < lightDepth)) {
+		bool lightVisiility = false;
+		if (lightInd != -1) {
+			lightVisiility = lightVisible(cameraRay, lightInd, hit.t);
+		}
+
+		if (lightVisiility) {
+			shade = scene.polyLights[lightInd]->c;
+		} 
+		else if (hit.prim != nullptr) {
 			Eigen::Vector3d point = cameraRay.p0 + hit.t * cameraRay.pt;
 			shade = integratorDispatch(point, hit.prim, scene.maxdepth, scene.cameraFrom);
-		}
-		else if (lightVisible != -1)
-		{
-			shade = scene.polyLights[lightVisible]->c;
 		}
 		NormalizeColor(shade);
 		std::copy_n(shade.data(), 3, canvas + i);

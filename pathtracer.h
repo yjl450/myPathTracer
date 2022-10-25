@@ -28,5 +28,5 @@ public:
 	// methods for direct monte carlo path tracing
 	Eigen::Array3d direct();
 	//utils
-	bool lightVisible(Ray ray, double primDepth, int lightInd);
+	bool lightVisible(Ray ray, int lightInd, double hit = -2);
 };

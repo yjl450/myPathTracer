@@ -29,7 +29,6 @@ QuadLight::QuadLight(Eigen::Vector3d origin, Eigen::Vector3d edge1, Eigen::Vecto
 
 double QuadLight::intersect(Ray ray) {
 
-	//return -1;
 	//ray-plane intersection
 	double t = ray.pt.dot(n);
 	if (abs(t) < eps) {
