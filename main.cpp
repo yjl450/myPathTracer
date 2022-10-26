@@ -6,6 +6,8 @@
 #include "scene.h"
 #include "pathtracer.h"
 
+#define SEED time(NULL)
+
 using namespace std;
 
 int main(int argc, char** argv)
@@ -37,7 +39,7 @@ int main(int argc, char** argv)
 
 	// start shading/integration
 	auto begin = chrono::steady_clock::now();
-	PathTracer pathtracer(move(scene), 10);
+	PathTracer pathtracer(move(scene), SEED);
 	auto canvas = pathtracer.pathTraceInit();
 
 	//save image and cleanup memory

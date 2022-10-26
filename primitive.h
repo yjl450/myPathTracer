@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <random>
 
-#define eps 1e-10
+#define eps 1e-6
 
 class Material{
 public:

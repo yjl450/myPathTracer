@@ -32,4 +32,5 @@ public:
 	QuadLight(Eigen::Vector3d origin, Eigen::Vector3d edge1, Eigen::Vector3d edge2, Eigen::Array3d color);
 	double intersect(Ray ray);
 	Eigen::Vector3d barycentric(Eigen::Vector3d point, int partition);
+	std::vector<Eigen::Vector3d> samples(int count, bool stratify, std::default_random_engine random);
 };

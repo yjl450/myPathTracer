@@ -83,3 +83,34 @@ Eigen::Vector3d QuadLight::barycentric(Eigen::Vector3d point, int partition) {
 	}
 	return Eigen::Vector3d(u, v, w);
 }
+
+std::vector<Eigen::Vector3d> QuadLight::samples(int count, bool stratify, std::default_random_engine random)
+{
+	std::uniform_real_distribution<double> dis(eps, 1.0 - eps);
+	std::vector<Eigen::Vector3d> lightSamples;
+	double r1, r2;
+	if (!stratify) {
+		lightSamples.push_back(va);
+		lightSamples.push_back(vb);
+		lightSamples.push_back(vc);
+		lightSamples.push_back(vd);
+		for (int i = 0; i < count - 4; i++) {
+			r1 = dis(random);
+			r2 = dis(random);
+			Eigen::Vector3d sample = va + e1 * r1 + e2 * r2;
+			lightSamples.push_back(sample);
+		}
+	}
+	else {
+		count = (int)std::sqrt(count);
+		for (int i = 0; i < count; i++) {
+			for (int j = 0; j < count; j++) {
+				r1 = dis(random);
+				r2 = dis(random);
+				Eigen::Vector3d sample = va + (j + r1) / count * e1 + (i + r2) / count * e2;
+				lightSamples.push_back(sample);
+			}
+		}
+	}
+	return lightSamples;
+}

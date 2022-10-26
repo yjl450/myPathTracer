@@ -36,69 +36,14 @@ Intersection PathTracer::intersect(Ray ray)
 	return Intersection{ dist, prim };
 }
 
-bool PathTracer::visible(Eigen::Vector3d point, int lightInd)
-{
-	double dist = std::numeric_limits<double>::infinity();
-	Eigen::Vector3d color = scene.simpleLights[lightInd]->c;
-	Eigen::Vector3d direction = scene.simpleLights[lightInd]->v0;
-	if (scene.simpleLights[lightInd]->kind == "point") {
-		direction = direction - point;
-		direction.normalize();
-		dist = (point - scene.simpleLights[lightInd]->v0).norm();
-	}
-	Ray shadowRay(point + eps * direction, direction);
-	Intersection hit = intersect(shadowRay);
-	if (hit.prim != nullptr && hit.t < dist) {
-		return false;
-	}
-	return true;
-}
-
-Eigen::Array3d PathTracer::diffuse(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int lightInd)
-{
-	Eigen::Vector3d LiDir = scene.simpleLights[lightInd]->v0;
-		Eigen::Vector3d a;
-	if (scene.simpleLights[lightInd]->kind == "point") {
-		LiDir = LiDir - point;
-		LiDir.normalize();
-	}
-	Eigen::Vector3d normal = prim->normal(point);
-	double intensity = std::max(normal.dot(LiDir), 0.0);
-	Eigen::Array3d color = scene.simpleLights[lightInd]->c * prim->mat.diffuse;
-	return color * intensity;
-}
-
-Eigen::Array3d PathTracer::specular(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int lightInd, Eigen::Vector3d eye)
-{
-	Eigen::Vector3d LiDir = scene.simpleLights[lightInd]->v0;
-	if (scene.simpleLights[lightInd]->kind == "point") {
-		LiDir = LiDir - point;
-		LiDir.normalize();
-	}
-	Eigen::Vector3d viewDir = (eye - point).normalized();
-	Eigen::Vector3d normal = prim->normal(point);
-	Eigen::Vector3d halfAngle = (LiDir + viewDir).normalized();
-	double intensity = std::max(normal.dot(halfAngle), 0.0);
-	Eigen::Array3d color = scene.simpleLights[lightInd]->c * prim->mat.specualr;
-	color *= std::pow(intensity, prim->mat.shininess);
-	return color;
-}
-
-Ray PathTracer::reflRay(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, Eigen::Vector3d eye) {
-	Eigen::Vector3d normal = prim->normal(point);
-	Eigen::Vector3d viewDir = (eye - point).normalized();
-	Eigen::Vector3d refDir = 2 * normal * viewDir.dot(normal) - viewDir;
-	refDir.normalize();
-	return Ray(point + eps * refDir, refDir);
-}
-
+// Simple ray tracing
 Eigen::Array3d PathTracer::raytracer(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int bounce, Eigen::Vector3d eye) {
 	Eigen::Array3d shade = prim->mat.ambient + prim->mat.emission;
-	for (int i = 0; i < scene.simpleLights.size(); i++) {
+	for (auto i: scene.simpleLights) {
 		if (visible(point, i)) {
 			double attenuation = 1;
-			if (scene.simpleLights[i]->kind == "point") {
-				double r = (scene.simpleLights[i]->v0 - point).norm();
+			if (i->kind == "point") {
+				double r = (i->v0 - point).norm();
 				attenuation = scene.attenuation[0] + r * scene.attenuation[1] + r * r * scene.attenuation[2];
 			}
 			shade += (diffuse(point, prim, i) + specular(point, prim, i, eye)) / attenuation;
@@ -113,6 +58,169 @@ Eigen::Array3d PathTracer::raytracer(Eigen::Vector3d point, std::shared_ptr<Prim
 		}
 	}
 	return shade;
+}
+
+
+bool PathTracer::visible(Eigen::Vector3d point, std::shared_ptr<Light> light)
+{
+	double dist = std::numeric_limits<double>::infinity();
+	Eigen::Vector3d color = light->c;
+	Eigen::Vector3d direction = light->v0;
+	if (light->kind == "point") {
+		direction = direction - point;
+		direction.normalize();
+		dist = (point - light->v0).norm();
+	}
+	Ray shadowRay(point + eps * direction, direction);
+	Intersection hit = intersect(shadowRay);
+	if (hit.prim != nullptr && hit.t < dist) {
+		return false;
+	}
+	return true;
+}
+
+Eigen::Array3d PathTracer::diffuse(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, std::shared_ptr<Light> light)
+{
+	Eigen::Vector3d LiDir = light->v0;
+	Eigen::Vector3d a;
+	if (light->kind == "point") {
+		LiDir = LiDir - point;
+		LiDir.normalize();
+	}
+	Eigen::Vector3d normal = prim->normal(point);
+	double intensity = std::max(normal.dot(LiDir), 0.0);
+	Eigen::Array3d color = light->c * prim->mat.diffuse;
+	return color * intensity;
+}
+
+Eigen::Array3d PathTracer::specular(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, std::shared_ptr<Light> light, Eigen::Vector3d eye)
+{
+	Eigen::Vector3d LiDir = light->v0;
+	if (light->kind == "point") {
+		LiDir = LiDir - point;
+		LiDir.normalize();
+	}
+	Eigen::Vector3d viewDir = (eye - point).normalized();
+	Eigen::Vector3d normal = prim->normal(point);
+	Eigen::Vector3d halfAngle = (LiDir + viewDir).normalized();
+	double intensity = std::max(normal.dot(halfAngle), 0.0);
+	Eigen::Array3d color = light->c * prim->mat.specualr;
+	color *= std::pow(intensity, prim->mat.shininess);
+	return color;
+}
+
+Ray PathTracer::reflRay(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, Eigen::Vector3d eye) {
+	Eigen::Vector3d normal = prim->normal(point);
+	Eigen::Vector3d viewDir = (eye - point).normalized();
+	Eigen::Vector3d refDir = 2 * normal * viewDir.dot(normal) - viewDir;
+	refDir.normalize();
+	return Ray(point + eps * refDir, refDir);
+}
+
+// analytic solution
+Eigen::Array3d PathTracer::analytic(Eigen::Vector3d r, std::shared_ptr<Primitive> prim)
+{
+	Eigen::Vector3d n = prim->normal(r);
+	Eigen::Array3d color(0, 0, 0);
+	for (auto i: scene.polyLights) {
+		if (prim->mat.emission.sum() - 0 <  eps) {
+			color += prim->mat.diffuse * i->c * (phi(r, i).dot(n)) / PI;
+		}
+		else {
+			color += prim->mat.emission;
+		}
+	}
+	return color;
+}
+
+double PathTracer::theta(Eigen::Vector3d r, Eigen::Vector3d vk, Eigen::Vector3d vk1) {
+	return acos((vk - r).normalized().dot((vk1 - r).normalized()));
+}
+
+Eigen::Vector3d PathTracer::gamma(Eigen::Vector3d r, Eigen::Vector3d vk, Eigen::Vector3d vk1) {
+	return (vk - r).cross(vk1 - r).normalized();
+}
+
+Eigen::Vector3d PathTracer::phi(Eigen::Vector3d r, std::shared_ptr<QuadLight> light) {
+	Eigen::Vector3d a = light->va;
+	Eigen::Vector3d b = light->vb;
+	Eigen::Vector3d c = light->vc;
+	Eigen::Vector3d d = light->vd;
+	Eigen::Vector3d irradiance(0, 0, 0);
+	irradiance += theta(r, a, b) * gamma(r, a, b);
+	irradiance += theta(r, b, d) * gamma(r, b, d);
+	irradiance += theta(r, d, c) * gamma(r, d, c);
+	irradiance += theta(r, c, a) * gamma(r, c, a);
+	return irradiance * 0.5;
+}
+
+// Monte Carlo direct illumination
+Eigen::Array3d PathTracer::direct(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, Eigen::Vector3d eye)
+{
+	// TODO: rendering incorrect
+	Eigen::Vector3d n = prim->normal(point);
+	Eigen::Array3d color(0, 0, 0), color_i(0, 0, 0);
+	Eigen::Array3d constant(1,1,1);
+	for (std::shared_ptr<QuadLight> li : scene.polyLights) {
+		color_i.setZero();
+		std::vector<Eigen::Vector3d> lightSamples = li->samples(scene.sample, scene.stratify, random);
+		for (auto p : lightSamples) {
+			if (visibility(point, p)) {
+				color_i += phoneBRDF(prim, eye, point, p) * geometry(prim, li, point, p);
+			}
+		}
+		color += color_i * li->c * li->area / lightSamples.size();
+	}
+	return color;
+}
+
+bool PathTracer::visibility(Eigen::Vector3d x1, Eigen::Vector3d x2) {
+	//x1: point of primitive
+	//x2: point of light
+	Eigen::Vector3d direction = (x2 - x1).normalized();
+	Ray r(x1 + eps * direction, direction);
+	Intersection hit = intersect(r);
+	if (hit.t > eps && hit.t < (x1 - x2).norm()) return false;
+	return true;
+}
+
+double PathTracer::geometry(std::shared_ptr<Primitive> prim, std::shared_ptr<QuadLight> light, Eigen::Vector3d x1, Eigen::Vector3d x2) {
+	double R, nldir;
+	Eigen::Vector3d n, nl, dir;
+	n = prim->normal(x1);
+	nl = light->n;
+	dir = (x2 - x1);
+	R = dir.norm();
+	dir.normalize();
+	nldir = nl.dot(dir);
+	if (nldir < 0) nldir *= -1;
+	return (n.dot(dir)) * nldir / (R * R);
+}
+
+Eigen::Array3d PathTracer::phoneBRDF(std::shared_ptr<Primitive> prim, Eigen::Vector3d eye, Eigen::Vector3d x1, Eigen::Vector3d x2) {
+	Eigen::Array3d diffuse, specular;
+	Eigen::Vector3d r, lm, n;
+	double intensity;
+	diffuse = prim->mat.diffuse / PI;
+	specular = prim->mat.specualr * (prim->mat.shininess + 2) / (2 * PI);
+	lm = (x2 - x1).normalized();
+	n = prim->normal(x1);
+	r = 2 * (lm.dot(n)) * n - lm;
+	intensity = pow(r.dot((eye - x1).normalized()), prim->mat.shininess);
+	return diffuse + specular * intensity;
+}
+
+bool PathTracer::lightVisible(Ray ray, std::shared_ptr<QuadLight> light, double hit) {
+	double lightDepth = -1.0;
+	double t = -1.0;
+	int lightVisible = -1;
+	if (hit == -2) {
+		Intersection primHit = intersect(ray);
+		hit = primHit.t;
+	}
+	t = light->intersect(ray);
+	if (hit == -1) return (t != -1);
+	else return (hit > t);
 }
 
 Ray PathTracer::camRay(int x, int y)
@@ -130,47 +238,6 @@ Ray PathTracer::camRay(int x, int y)
 	return Ray(scene.cameraFrom, alpha * u + beta * v - w);
 }
 
-double PathTracer::theta(Eigen::Vector3d r, Eigen::Vector3d vk, Eigen::Vector3d vk1) {
-	return acos((vk - r).normalized().dot((vk1 - r).normalized()));
-}
-
-Eigen::Vector3d PathTracer::gamma(Eigen::Vector3d r, Eigen::Vector3d vk, Eigen::Vector3d vk1) {
-	return (vk - r).cross(vk1 - r).normalized();
-}
-
-Eigen::Vector3d PathTracer::phi(Eigen::Vector3d r, int lightInd) {
-	Eigen::Vector3d a = scene.polyLights[lightInd]->va;
-	Eigen::Vector3d b = scene.polyLights[lightInd]->vb;
-	Eigen::Vector3d c = scene.polyLights[lightInd]->vc;
-	Eigen::Vector3d d = scene.polyLights[lightInd]->vd;
-	Eigen::Vector3d irradiance(0, 0, 0);
-	irradiance += theta(r, a, b) * gamma(r, a, b);
-	irradiance += theta(r, b, d) * gamma(r, b, d);
-	irradiance += theta(r, d, c) * gamma(r, d, c);
-	irradiance += theta(r, c, a) * gamma(r, c, a);
-	return irradiance * 0.5;
-}
-
-Eigen::Array3d PathTracer::analytic(Eigen::Vector3d r, std::shared_ptr<Primitive> prim)
-{
-	Eigen::Vector3d n = prim->normal(r);
-	Eigen::Array3d color(0, 0, 0);
-	for (int i = 0; i < scene.polyLights.size(); i++) {
-		if (prim->mat.emission.sum() - 0 <  eps) {
-			color += prim->mat.diffuse * scene.polyLights[i]->c * (phi(r, i).dot(n)) / PI;
-		}
-		else {
-			color += prim->mat.emission;
-		}
-	}
-	return color;
-}
-
-Eigen::Array3d PathTracer::direct()
-{
-	return Eigen::Array3d();
-}
-
 Eigen::Array3d PathTracer::integratorDispatch(Eigen::Vector3d point, std::shared_ptr<Primitive> prim, int bounce, Eigen::Vector3d eye) {
 	if (scene.integrator == "raytracer") {
 		return raytracer(point, prim, bounce, eye);
@@ -179,48 +246,10 @@ Eigen::Array3d PathTracer::integratorDispatch(Eigen::Vector3d point, std::shared
 		return analytic(point, prim);
 	}
 	else if (scene.integrator == "direct") {
-		return direct();
+		return direct(point, prim, eye);
 	}
+	return Eigen::Array3d(0, 0, 0);
 }
-
-bool PathTracer::lightVisible(Ray ray, int lightInd, double hit) {
-	double lightDepth = -1.0;
-	double t = -1.0;
-	int lightVisible = -1;
-	if (hit == -2) {
-		Intersection primHit = intersect(ray);
-		hit = primHit.t;
-	}
-	t = scene.polyLights[lightInd]->intersect(ray);
-	if (hit == -1) {
-		return (t != -1);
-	}
-	else {
-		return (hit > t);
-	}
-}
-
-int PathTracer::visibility(Eigen::Vector3d x1, Eigen::Vector3d x2) {
-	//x1: point of primitive
-	//x2: point of light
-	Ray r(x1, x2 - x1);
-	Intersection hit = intersect(r);
-	if (hit.t < (x1 - x2).norm()) {
-		return 0;
-	}
-	return 1;
-}
-
-double PathTracer::geometry(std::shared_ptr<Primitive> prim, int lightInd, Eigen::Vector3d x1, Eigen::Vector3d x2) {
-	double R = pow((x1 - x2).norm(), 2);
-	Eigen::Vector3d n, nl, dir;
-	n = prim->normal(x1);
-	nl = -1 * scene.polyLights[lightInd]->n;
-	dir = (x2 - x1).normalized();
-	return (1 / R) * (n.dot(dir)) * (nl.dot(dir));
-}
-
-//Eigen::Array3d phoneBRDF(std::shared_ptr<Primitive> prim)
 
 unsigned char* PathTracer::pathTraceInit()
 {
@@ -246,21 +275,21 @@ unsigned char* PathTracer::pathTraceInit()
 
 		double lightDepth = -1.0;
 		double lt = -1.0;
-		int lightInd = -1;
-		for (int l = 0; l < scene.polyLights.size(); l++) {
-			lt = scene.polyLights[l]->intersect(cameraRay);
+		std::shared_ptr<QuadLight> light = nullptr;
+		for (auto l: scene.polyLights) {
+			lt = l->intersect(cameraRay);
 			if (lt > 0 && (lt < lightDepth || lightDepth < 0)) {
 				lightDepth = lt;
-				lightInd = l;
+				light = l;
 			}
 		}
 		bool lightVisiility = false;
-		if (lightInd != -1) {
-			lightVisiility = lightVisible(cameraRay, lightInd, hit.t);
+		if (light != nullptr) {
+			lightVisiility = lightVisible(cameraRay, light, hit.t);
 		}
 
 		if (lightVisiility) {
-			shade = scene.polyLights[lightInd]->c;
+			shade = light->c;
 		} 
 		else if (hit.prim != nullptr) {
 			Eigen::Vector3d point = cameraRay.p0 + hit.t * cameraRay.pt;
