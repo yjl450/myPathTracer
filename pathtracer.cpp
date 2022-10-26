@@ -165,7 +165,7 @@ Eigen::Array3d PathTracer::direct(Eigen::Vector3d point, std::shared_ptr<Primiti
 		color_i.setZero();
 		std::vector<Eigen::Vector3d> lightSamples = li->samples(scene.sample, scene.stratify, random);
 		for (auto p : lightSamples) {
-			if (visibility(point, p)) {
+			if (visibility(point, p, prim, li)) {
 				color_i += phoneBRDF(prim, eye, point, p) * geometry(prim, li, point, p);
 			}
 		}
@@ -174,13 +174,13 @@ Eigen::Array3d PathTracer::direct(Eigen::Vector3d point, std::shared_ptr<Primiti
 	return color;
 }
 
-bool PathTracer::visibility(Eigen::Vector3d x1, Eigen::Vector3d x2) {
+bool PathTracer::visibility(Eigen::Vector3d x1, Eigen::Vector3d x2, std::shared_ptr<Primitive> prim, std::shared_ptr<QuadLight> light) {
 	//x1: point of primitive
 	//x2: point of light
 	Eigen::Vector3d direction = (x2 - x1).normalized();
 	Ray r(x1 + eps * direction, direction);
 	Intersection hit = intersect(r);
-	if (hit.t > eps && hit.t < (x1 - x2).norm()) return false;
+	if (light->n.dot(r.pt) < 0 || hit.t > eps && hit.t < (x2 - x1).norm()) return false;
 	return true;
 }
 
@@ -208,19 +208,6 @@ Eigen::Array3d PathTracer::phoneBRDF(std::shared_ptr<Primitive> prim, Eigen::Vec
 	r = 2 * (lm.dot(n)) * n - lm;
 	intensity = pow(r.dot((eye - x1).normalized()), prim->mat.shininess);
 	return diffuse + specular * intensity;
-}
-
-bool PathTracer::lightVisible(Ray ray, std::shared_ptr<QuadLight> light, double hit) {
-	double lightDepth = -1.0;
-	double t = -1.0;
-	int lightVisible = -1;
-	if (hit == -2) {
-		Intersection primHit = intersect(ray);
-		hit = primHit.t;
-	}
-	t = light->intersect(ray);
-	if (hit == -1) return (t != -1);
-	else return (hit > t);
 }
 
 Ray PathTracer::camRay(int x, int y)
@@ -276,6 +263,7 @@ unsigned char* PathTracer::pathTraceInit()
 		double lightDepth = -1.0;
 		double lt = -1.0;
 		std::shared_ptr<QuadLight> light = nullptr;
+		bool lightVisiility = false;
 		for (auto l: scene.polyLights) {
 			lt = l->intersect(cameraRay);
 			if (lt > 0 && (lt < lightDepth || lightDepth < 0)) {
@@ -283,9 +271,8 @@ unsigned char* PathTracer::pathTraceInit()
 				light = l;
 			}
 		}
-		bool lightVisiility = false;
 		if (light != nullptr) {
-			lightVisiility = lightVisible(cameraRay, light, hit.t);
+			lightVisiility = lightDepth < hit.t || hit.t == -1;
 		}
 
 		if (lightVisiility) {
@@ -295,6 +282,7 @@ unsigned char* PathTracer::pathTraceInit()
 			Eigen::Vector3d point = cameraRay.p0 + hit.t * cameraRay.pt;
 			shade = integratorDispatch(point, hit.prim, scene.maxdepth, scene.cameraFrom);
 		}
+
 		NormalizeColor(shade);
 		std::copy_n(shade.data(), 3, canvas + i);
 	}

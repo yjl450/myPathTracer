@@ -33,6 +33,7 @@ int main(int argc, char** argv)
 	cout << "\t" << scene.simpleLights.size() + scene.polyLights.size() << " Lights" << endl;
 	cout << "\tMax recursion depth: " << scene.maxdepth << endl;
 	cout << "\tIntegrator: " << scene.integrator << endl;
+	cout << "\tRandom seed: " << SEED << endl;
 	int width = scene.width;
 	int height = scene.height;
 	string outname = scene.outname;

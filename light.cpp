@@ -86,7 +86,7 @@ Eigen::Vector3d QuadLight::barycentric(Eigen::Vector3d point, int partition) {
 
 std::vector<Eigen::Vector3d> QuadLight::samples(int count, bool stratify, std::default_random_engine random)
 {
-	std::uniform_real_distribution<double> dis(eps, 1.0 - eps);
+	std::uniform_real_distribution<double> dis(0, 1.0);
 	std::vector<Eigen::Vector3d> lightSamples;
 	double r1, r2;
 	if (!stratify) {

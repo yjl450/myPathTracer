@@ -59,10 +59,6 @@ Scene::Scene(std::ifstream& scenefile) {
 			cameraAt << vals[3], vals[4], vals[5];
 			cameraUp << vals[6], vals[7], vals[8];
 			cameraUp.normalize();
-			//Eigen::Vector3d camDir = cameraAt - cameraFrom;
-			//cameraUp = cameraUp.cross(camDir);
-			//cameraUp = camDir.cross(cameraUp);
-			//cameraUp.normalize();
 			fov = vals[9];
 		}
 		else if (cmd == "vertex") {
