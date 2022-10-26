@@ -117,10 +117,10 @@ Scene::Scene(std::ifstream& scenefile) {
 			reorder_color(c);
 			if (cmd == "directional") {
 				p.normalize();
-				simpleLights.push_back(make_unique<Directional>(p, c));
+				simpleLights.push_back(make_shared<Directional>(p, c));
 			}
 			else {
-				simpleLights.push_back(make_unique<PointLight>(p, c));
+				simpleLights.push_back(make_shared<PointLight>(p, c));
 			}
 		}
 		else if (cmd == "quadLight") {
@@ -130,7 +130,7 @@ Scene::Scene(std::ifstream& scenefile) {
 			Eigen::Vector3d edge2(vals[6], vals[7], vals[8]);
 			Eigen::Array3d c(vals[9], vals[10], vals[11]);
 			reorder_color(c);
-			polyLights.push_back(make_unique<QuadLight>(origin, edge1, edge2, c));
+			polyLights.push_back(make_shared<QuadLight>(origin, edge1, edge2, c));
 		}
 		else if (cmd == "ambient") {
 			vals = read_vals(s, 3);
